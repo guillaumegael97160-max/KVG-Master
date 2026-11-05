@@ -1,4 +1,4 @@
-name: Compiler APK Android KVG - correction automatique
+name: Compiler APK Android KVG
 
 on:
   push:
@@ -12,40 +12,66 @@ jobs:
   build:
     name: Compiler APK installable
     runs-on: ubuntu-latest
-
     steps:
-      - name: Recuperer les fichiers du depot
+      - name: Recuperer le depot
         uses: actions/checkout@v4
 
-      - name: Reconstruire les dossiers Android manquants
+      - name: Reparer automatiquement le projet Android
         shell: bash
         run: |
           python3 - <<'PYTHON'
           from pathlib import Path
           import shutil
-          import re
           import struct
-          
+          import re
+
           root = Path.cwd()
           app = root / 'app'
           app.mkdir(exist_ok=True)
-          
-          # Certains fichiers ont ete ajoutes directement a la racine sur GitHub.
-          # On reconstitue l'arborescence dans l'espace temporaire de compilation.
-          root_build = root / 'build.gradle'
-          module_build = app / 'build.gradle'
-          root_plugin_build = root / 'build (9).gradle'
-          
-          if not module_build.is_file():
-              if root_build.is_file() and 'android {' in root_build.read_text(encoding='utf-8'):
-                  shutil.copy2(root_build, module_build)
-                  if root_plugin_build.is_file():
-                      shutil.copy2(root_plugin_build, root_build)
-                  else:
-                      root_build.write_text("plugins {\n    id 'com.android.application' version '8.7.3' apply false\n}\n", encoding='utf-8')
-              else:
-                  raise RuntimeError('Le fichier app/build.gradle et le fichier de configuration Android a la racine sont absents.')
-          
+
+          # Corrige le depot KVG-Master qui contient des fichiers Android
+          # directement a la racine, sans dossier app/.
+          (root / 'settings.gradle').write_text('''pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = 'LaRentreeMonDeo'
+          include ':app'
+          ''', encoding='utf-8')
+
+          (root / 'build.gradle').write_text('''plugins {
+              id 'com.android.application' version '8.7.3' apply false
+          }
+          ''', encoding='utf-8')
+
+          (app / 'build.gradle').write_text('''plugins {
+              id 'com.android.application'
+          }
+          android {
+              namespace 'com.laboratoirekvg.larentree'
+              compileSdk 35
+              defaultConfig {
+                  applicationId 'com.laboratoirekvg.larentree'
+                  minSdk 24
+                  targetSdk 35
+                  versionCode 1
+                  versionName '1.0.0'
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          ''', encoding='utf-8')
+
+          (root / 'gradle.properties').write_text('''org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          ''', encoding='utf-8')
+
+          # Copie les vrais fichiers du depot, sans inventer leur contenu.
           files = {
               'MainActivity.java': 'app/src/main/java/com/laboratoirekvg/larentree/MainActivity.java',
               'AndroidManifest.xml': 'app/src/main/AndroidManifest.xml',
@@ -57,53 +83,57 @@ jobs:
               'ic_launcher_round.xml': 'app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml',
               'ic_launcher_foreground.png': 'app/src/main/res/drawable-nodpi/ic_launcher_foreground.png',
           }
-          
-          for source, dest in files.items():
-              src = root / source
-              target = root / dest
-              if target.exists():
+          for source_name, rel_path in files.items():
+              target = root / rel_path
+              if target.is_file():
                   continue
-              if src.exists():
+              source = root / source_name
+              if source.is_file():
                   target.parent.mkdir(parents=True, exist_ok=True)
-                  shutil.copy2(src, target)
+                  shutil.copy2(source, target)
+                  print('RANGE :', source_name, '->', rel_path)
               else:
-                  print(f'AVERTISSEMENT: {source} absent')
-          
-          # Les numeros (1), (3), etc. etaient des renommages automatiques
-          # lies aux telechargements : retrouver la densite depuis la taille PNG.
-          size_to_density = {48:'mdpi', 72:'hdpi', 96:'xhdpi', 144:'xxhdpi', 192:'xxxhdpi'}
+                  print('INTROUVABLE :', source_name)
+
+          # GitHub a renomme certains PNG en ic_launcher (1).png, etc.
+          # Leur taille permet de retrouver automatiquement leur densite.
+          densities = {48:'mdpi',72:'hdpi',96:'xhdpi',144:'xxhdpi',192:'xxxhdpi'}
           pattern = re.compile(r'^ic_launcher(?:_round)?(?: \(\d+\))?\.png$')
-          for src in root.iterdir():
-              if not src.is_file() or not pattern.fullmatch(src.name):
+          for source in root.iterdir():
+              if not source.is_file() or not pattern.fullmatch(source.name):
                   continue
-              with src.open('rb') as handle:
-                  header = handle.read(24)
-              if len(header) < 24 or header[:8] != b'\x89PNG\r\n\x1a\n':
+              data = source.read_bytes()[:24]
+              if len(data) != 24 or data[:8] != b'\x89PNG\r\n\x1a\n':
                   continue
-              width, height = struct.unpack('>II', header[16:24])
-              density = size_to_density.get(width)
-              if density is None or height != width:
-                  print(f'Image ignoree (dimensions inattendues): {src.name} {width}x{height}')
+              width, height = struct.unpack('>II', data[16:24])
+              if width != height or width not in densities:
                   continue
-              icon_name = 'ic_launcher_round.png' if src.name.startswith('ic_launcher_round') else 'ic_launcher.png'
-              dst = root / 'app/src/main/res' / ('mipmap-' + density) / icon_name
-              if not dst.exists():
-                  dst.parent.mkdir(parents=True, exist_ok=True)
-                  shutil.copy2(src, dst)
-          
-          mandatory = ['settings.gradle', 'build.gradle', 'app/build.gradle',
+              basename = 'ic_launcher_round.png' if source.name.startswith('ic_launcher_round') else 'ic_launcher.png'
+              target = root / 'app/src/main/res' / ('mipmap-' + densities[width]) / basename
+              if not target.is_file():
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy2(source, target)
+                  print('ICONE :', source.name, '->', target.relative_to(root))
+
+          mandatory = [
+              'settings.gradle', 'build.gradle', 'app/build.gradle',
               'app/src/main/AndroidManifest.xml',
               'app/src/main/java/com/laboratoirekvg/larentree/MainActivity.java',
               'app/src/main/res/layout/activity_main.xml',
               'app/src/main/res/values/strings.xml',
               'app/src/main/res/values/styles.xml',
-              'app/src/main/res/values/colors.xml']
-          for required in mandatory:
-              if not (root / required).is_file():
-                  raise RuntimeError(f'Fichier indispensable absent: {required}')
-          print('OK : projet Android reconstitue pour la compilation')
-          for p in sorted((root / 'app').rglob('*')):
-              if p.is_file(): print(' -', p.relative_to(root))
+              'app/src/main/res/values/colors.xml',
+              'app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml',
+              'app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml',
+              'app/src/main/res/drawable-nodpi/ic_launcher_foreground.png',
+          ]
+          for name in ['ic_launcher.png', 'ic_launcher_round.png']:
+              for density in densities.values():
+                  mandatory.append(f'app/src/main/res/mipmap-{density}/{name}')
+          missing = [p for p in mandatory if not (root / p).is_file()]
+          if missing:
+              raise RuntimeError('Fichiers Android introuvables :\n' + '\n'.join(missing))
+          print('Projet Android reconstitue et verifie avec succes.')
           PYTHON
 
       - name: Installer Java 17
@@ -117,20 +147,19 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Installer les composants Android
+      - name: Installer Android SDK 35
         shell: bash
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0'
 
-      - name: Compiler le fichier APK
+      - name: Compiler l APK Android
         run: gradle --no-daemon --stacktrace :app:assembleDebug
 
-      - name: Verifier le resultat
+      - name: Verifier l APK
         run: test -s app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Rendre l APK telechargeable
+      - name: Publier l APK
         uses: actions/upload-artifact@v4
         with:
           name: KVG-La-Rentree-APK
