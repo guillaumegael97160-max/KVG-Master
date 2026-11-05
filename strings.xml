@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">La Rentrée – Mon Déo</string>
+    <string name="toolbar_title">La Rentrée</string>
+    <string name="refresh">Actualiser</string>
+    <string name="menu">Options</string>
+    <string name="site_unavailable">Impossible d’ouvrir la page</string>
+    <string name="site_unavailable_hint">Vérifiez votre connexion et les autorisations du site Apps Script. Vous pouvez aussi ouvrir le site dans votre navigateur.</string>
+    <string name="retry">Réessayer</string>
+    <string name="open_browser">Ouvrir dans le navigateur</string>
+</resources>
