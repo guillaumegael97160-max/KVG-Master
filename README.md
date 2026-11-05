@@ -57,3 +57,10 @@ Après une modification, enregistrer les nouveaux fichiers sur GitHub. Une nouve
 - Pour publier sur Google Play, il faut générer une version **release signée** et remplir les obligations de la boutique.
 - Si Android refuse une mise à jour avec une erreur de signature différente, désinstaller l'ancienne APK de test puis installer la nouvelle. **La désinstallation efface les données locales de l'application.**
 - Le projet utilise Android Gradle Plugin 8.7.3, Gradle 8.9, Java 17 et compileSdk 35.
+
+
+## Correction GitHub Actions (05/11/2026)
+
+Le workflow `.github/workflows/main.yml` utilise le SDK Android preinstalle sur GitHub Actions, sans l'action `android-actions/setup-android@v3` qui pouvait echouer en cherchant le paquet obsolete `tools`.
+
+Copiez **tout le contenu de ce dossier a la racine du depot GitHub** (pas sous un dossier supplementaire), puis ouvrez Actions > Compiler APK Android KVG > Run workflow. Si la compilation reussit, l'APK se trouve dans l'artefact `KVG-La-Rentree-APK`.
