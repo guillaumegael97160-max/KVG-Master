@@ -1,29 +1,110 @@
-name: Compiler APK Android KVG
+name: Compiler APK Android KVG - correction automatique
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
     name: Compiler APK installable
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
-      - name: Recuperer les fichiers du projet
+      - name: Recuperer les fichiers du depot
         uses: actions/checkout@v4
 
-      - name: Verifier la presence du projet Android
+      - name: Reconstruire les dossiers Android manquants
         shell: bash
         run: |
-          if [ ! -f settings.gradle ] || [ ! -f app/build.gradle ]; then
-            echo "::error::Projet Android incomplet : il faut settings.gradle et app/build.gradle a la racine du depot."
-            exit 1
-          fi
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          import shutil
+          import re
+          import struct
+          
+          root = Path.cwd()
+          app = root / 'app'
+          app.mkdir(exist_ok=True)
+          
+          # Certains fichiers ont ete ajoutes directement a la racine sur GitHub.
+          # On reconstitue l'arborescence dans l'espace temporaire de compilation.
+          root_build = root / 'build.gradle'
+          module_build = app / 'build.gradle'
+          root_plugin_build = root / 'build (9).gradle'
+          
+          if not module_build.is_file():
+              if root_build.is_file() and 'android {' in root_build.read_text(encoding='utf-8'):
+                  shutil.copy2(root_build, module_build)
+                  if root_plugin_build.is_file():
+                      shutil.copy2(root_plugin_build, root_build)
+                  else:
+                      root_build.write_text("plugins {\n    id 'com.android.application' version '8.7.3' apply false\n}\n", encoding='utf-8')
+              else:
+                  raise RuntimeError('Le fichier app/build.gradle et le fichier de configuration Android a la racine sont absents.')
+          
+          files = {
+              'MainActivity.java': 'app/src/main/java/com/laboratoirekvg/larentree/MainActivity.java',
+              'AndroidManifest.xml': 'app/src/main/AndroidManifest.xml',
+              'activity_main.xml': 'app/src/main/res/layout/activity_main.xml',
+              'strings.xml': 'app/src/main/res/values/strings.xml',
+              'styles.xml': 'app/src/main/res/values/styles.xml',
+              'colors.xml': 'app/src/main/res/values/colors.xml',
+              'ic_launcher.xml': 'app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml',
+              'ic_launcher_round.xml': 'app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml',
+              'ic_launcher_foreground.png': 'app/src/main/res/drawable-nodpi/ic_launcher_foreground.png',
+          }
+          
+          for source, dest in files.items():
+              src = root / source
+              target = root / dest
+              if target.exists():
+                  continue
+              if src.exists():
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy2(src, target)
+              else:
+                  print(f'AVERTISSEMENT: {source} absent')
+          
+          # Les numeros (1), (3), etc. etaient des renommages automatiques
+          # lies aux telechargements : retrouver la densite depuis la taille PNG.
+          size_to_density = {48:'mdpi', 72:'hdpi', 96:'xhdpi', 144:'xxhdpi', 192:'xxxhdpi'}
+          pattern = re.compile(r'^ic_launcher(?:_round)?(?: \(\d+\))?\.png$')
+          for src in root.iterdir():
+              if not src.is_file() or not pattern.fullmatch(src.name):
+                  continue
+              with src.open('rb') as handle:
+                  header = handle.read(24)
+              if len(header) < 24 or header[:8] != b'\x89PNG\r\n\x1a\n':
+                  continue
+              width, height = struct.unpack('>II', header[16:24])
+              density = size_to_density.get(width)
+              if density is None or height != width:
+                  print(f'Image ignoree (dimensions inattendues): {src.name} {width}x{height}')
+                  continue
+              icon_name = 'ic_launcher_round.png' if src.name.startswith('ic_launcher_round') else 'ic_launcher.png'
+              dst = root / 'app/src/main/res' / ('mipmap-' + density) / icon_name
+              if not dst.exists():
+                  dst.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy2(src, dst)
+          
+          mandatory = ['settings.gradle', 'build.gradle', 'app/build.gradle',
+              'app/src/main/AndroidManifest.xml',
+              'app/src/main/java/com/laboratoirekvg/larentree/MainActivity.java',
+              'app/src/main/res/layout/activity_main.xml',
+              'app/src/main/res/values/strings.xml',
+              'app/src/main/res/values/styles.xml',
+              'app/src/main/res/values/colors.xml']
+          for required in mandatory:
+              if not (root / required).is_file():
+                  raise RuntimeError(f'Fichier indispensable absent: {required}')
+          print('OK : projet Android reconstitue pour la compilation')
+          for p in sorted((root / 'app').rglob('*')):
+              if p.is_file(): print(' -', p.relative_to(root))
+          PYTHON
 
       - name: Installer Java 17
         uses: actions/setup-java@v4
@@ -36,37 +117,20 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      # Le SDK Android est deja present sur ubuntu-latest.
-      # Ne pas utiliser android-actions/setup-android@v3 :
-      # sa tentative d'installation du paquet obsolete "tools" echoue.
-      - name: Verifier Android SDK
+      - name: Installer les composants Android
         shell: bash
         run: |
-          echo "ANDROID_HOME=${ANDROID_HOME}"
-          command -v sdkmanager
-          sdkmanager --version
-
-      - name: Accepter les licences Android SDK
-        shell: bash
-        run: |
-          sdkmanager --licenses < <(yes)
-
-      - name: Installer Android SDK 35
-        shell: bash
-        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          yes | sdkmanager --licenses > /dev/null || true
           sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Compiler l'application
-        shell: bash
-        run: |
-          gradle --no-daemon --stacktrace :app:assembleDebug
+      - name: Compiler le fichier APK
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
 
-      - name: Verifier le fichier APK
-        shell: bash
-        run: |
-          test -s app/build/outputs/apk/debug/app-debug.apk
+      - name: Verifier le resultat
+        run: test -s app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Mettre l'APK en telechargement
+      - name: Rendre l APK telechargeable
         uses: actions/upload-artifact@v4
         with:
           name: KVG-La-Rentree-APK
