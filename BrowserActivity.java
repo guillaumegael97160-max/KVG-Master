@@ -43,7 +43,7 @@ public class BrowserActivity extends Activity {
                 v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
                 return insets;
             });
-            root.requestApplyWindowInsets();
+            root.requestApplyInsets();
         }
 
         browser = findViewById(R.id.inner_webview);
