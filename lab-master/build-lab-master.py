@@ -41,8 +41,8 @@ android {
         applicationId 'com.laboratoirekvg.labmaster'
         minSdk 24
         targetSdk 35
-        versionCode 1
-        versionName '1.0.0'
+        versionCode 2
+        versionName '1.1.0'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -60,10 +60,81 @@ java = java.replace("package com.laboratoirekvg.larentree;",
                     "package com.laboratoirekvg.labmaster;")
 java = java.replace("la_rentree_preferences", "kvg_lab_master_preferences")
 java = java.replace("La Rentrée", "KVG Lab Master")
+
+# KVG Lab Master utilise une WebView native en plein ecran.
+java = java.replace(
+    "        findViewById(R.id.button_refresh).setOnClickListener(view -> reload());\n", "")
+java = java.replace(
+    "        findViewById(R.id.button_browser).setOnClickListener(view -> openExternal(START_URL));\n", "")
+
+# En affichage immersif, le conteneur n'ajoute pas les anciennes marges systeme.
+start = java.find("        // Android 15+ applique")
+end = java.find("        progressBar = findViewById", start)
+if start < 0 or end < start:
+    raise RuntimeError("Bloc Android insets introuvable dans MainActivity.java")
+java = java[:start] + java[end:]
+java = java.replace(
+    "        setContentView(R.layout.activity_main);",
+    "        setContentView(R.layout.activity_main);\n        enterImmersiveMode();")
+
+immersive = """
+    private void enterImmersiveMode() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            android.view.WindowInsetsController controller =
+                    getWindow().getInsetsController();
+            if (controller != null) {
+                controller.hide(android.view.WindowInsets.Type.systemBars());
+                controller.setSystemBarsBehavior(
+                    android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) enterImmersiveMode();
+    }
+
+"""
+if "    private void initializeWebView()" not in java:
+    raise RuntimeError("Ancre initializeWebView introuvable")
+java = java.replace("    private void initializeWebView()", immersive +
+                    "    private void initializeWebView()")
+
+# Une authentification Google n'est pas autorisee dans une WebView.
+# Signaler le probleme sans ouvrir Chrome automatiquement.
+old_login = """            if (host != null && (host.equalsIgnoreCase("accounts.google.com")
+                    || host.toLowerCase(Locale.ROOT).endsWith(".accounts.google.com"))) {
+                openExternal(uri.toString());
+                return true;
+            }"""
+new_login = """            if (host != null && (host.equalsIgnoreCase("accounts.google.com")
+                    || host.toLowerCase(Locale.ROOT).endsWith(".accounts.google.com"))) {
+                pageHasError = true;
+                progressBar.setVisibility(View.GONE);
+                errorPanel.setVisibility(View.VISIBLE);
+                Toast.makeText(this,
+                        "Connexion Google requise : utilisez explicitement le navigateur ou verifiez le deploiement Apps Script.",
+                        Toast.LENGTH_LONG).show();
+                return true;
+            }"""
+if old_login not in java:
+    raise RuntimeError("Ancre connexion Google introuvable")
+java = java.replace(old_login, new_login)
+java = java.replace(
+    '        items.add(0, MENU_BROWSER, 3, "Ouvrir dans Chrome / navigateur");\n', "")
 (java_dir / "MainActivity.java").write_text(java, encoding="utf-8")
 
 for source_name, target_name in [
-    ("activity_main.xml", "layout/activity_main.xml"),
     ("ic_launcher.xml", "mipmap-anydpi-v26/ic_launcher.xml"),
     ("ic_launcher_round.xml", "mipmap-anydpi-v26/ic_launcher_round.xml"),
 ]:
@@ -73,6 +144,33 @@ for source_name, target_name in [
     target = res / target_name
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source_file, target)
+
+# Supprimer la barre d'outils de 54 dp.
+# Le menu flottant conserve l'actualisation et le mode ordinateur.
+layout = (root / "activity_main.xml").read_text(encoding="utf-8")
+top_start = layout.find('    <LinearLayout\n        android:id="@+id/top_bar"')
+top_end = layout.find('    <ProgressBar', top_start)
+if top_start < 0 or top_end < top_start:
+    raise RuntimeError("Barre d'outils introuvable dans activity_main.xml")
+layout = layout[:top_start] + layout[top_end:]
+anchor = "    </FrameLayout>\n</LinearLayout>"
+floating_menu = """        <TextView
+            android:id="@+id/button_menu"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="9dp"
+            android:background="#CC17130E"
+            android:gravity="center"
+            android:text="⋮"
+            android:textColor="#F2D58B"
+            android:textSize="27sp"
+            android:contentDescription="@string/menu" />
+"""
+if anchor not in layout:
+    raise RuntimeError("Ancre menu flottant introuvable")
+layout = layout.replace(anchor, floating_menu + anchor)
+(res / "layout/activity_main.xml").write_text(layout, encoding="utf-8")
 
 manifest = (root / "AndroidManifest.xml").read_text(encoding="utf-8")
 manifest = manifest.replace("Theme.LaRentree", "Theme.LabMaster")
