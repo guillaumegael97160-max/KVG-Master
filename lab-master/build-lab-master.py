@@ -41,16 +41,13 @@ android {
         applicationId 'com.laboratoirekvg.labmaster'
         minSdk 24
         targetSdk 35
-        versionCode 4
-        versionName '1.3.0'
+        versionCode 5
+        versionName '1.4.0'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-}
-dependencies {
-    implementation 'androidx.browser:browser:1.8.0'
 }
 """)
 
@@ -64,144 +61,74 @@ java = java.replace("package com.laboratoirekvg.larentree;",
 java = java.replace("la_rentree_preferences", "kvg_lab_master_preferences")
 java = java.replace("La Rentrée", "KVG Lab Master")
 
-# KVG Lab Master utilise une WebView native en plein ecran.
-java = java.replace(
-    "        findViewById(R.id.button_refresh).setOnClickListener(view -> reload());\n", "")
-# Aucun bouton d'ouverture du navigateur ni barre d'adresse dans l'application.
-java = java.replace(
-    "        findViewById(R.id.button_menu).setOnClickListener(this::showMenu);\n", "")
-java = java.replace(
-    "        findViewById(R.id.button_browser).setOnClickListener(view -> openExternal(START_URL));\n", "")
-java = java.replace(
+# Version smartphone : navigateur WebView interne sans aucune barre d'adresse.
+# Commandes natives : titre, actualiser, ouvrir volontairement dans Chrome.
+def java_swap(old, new):
+    global java
+    if old not in java:
+        raise RuntimeError("Source MainActivity.java modifiee : " + old[:70])
+    java = java.replace(old, new, 1)
+
+java_swap(
     "        desktopMode = preferences.getBoolean(PREF_DESKTOP, isTablet);",
     "        desktopMode = false;")
+java_swap(
+    "        findViewById(R.id.button_menu).setOnClickListener(this::showMenu);",
+    "        findViewById(R.id.button_menu).setOnClickListener(view -> openInChrome());")
+java_swap(
+    "        findViewById(R.id.button_browser).setOnClickListener(view -> openExternal(START_URL));\n",
+    "")
 
-
-# En affichage immersif, le conteneur n'ajoute pas les anciennes marges systeme.
-start = java.find("        // Android 15+ applique")
-end = java.find("        progressBar = findViewById", start)
-if start < 0 or end < start:
-    raise RuntimeError("Bloc Android insets introuvable dans MainActivity.java")
-java = java[:start] + java[end:]
-java = java.replace(
-    "        setContentView(R.layout.activity_main);",
-    "        setContentView(R.layout.activity_main);\n        enterImmersiveMode();")
-
-immersive = """
-    private void enterImmersiveMode() {
-        if (Build.VERSION.SDK_INT >= 30) {
-            android.view.WindowInsetsController controller =
-                    getWindow().getInsetsController();
-            if (controller != null) {
-                controller.hide(android.view.WindowInsets.Type.systemBars());
-                controller.setSystemBarsBehavior(
-                    android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-            }
-        } else {
-            getWindow().getDecorView().setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-        }
-    }
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) enterImmersiveMode();
-    }
-
-"""
-if "    private void initializeWebView()" not in java:
-    raise RuntimeError("Ancre initializeWebView introuvable")
-java = java.replace("    private void initializeWebView()", immersive +
-                    "    private void initializeWebView()")
-
-# Une authentification Google n'est pas autorisee dans une WebView.
-# Signaler le probleme sans ouvrir Chrome automatiquement.
-old_login = """            if (host != null && (host.equalsIgnoreCase("accounts.google.com")
+# La WebView n'a pas acces a la session Google de Chrome.
+# Si Google reclame OAuth, afficher l'aide plutot que basculer
+# automatiquement vers Chrome.
+old_auth = """            if (host != null && (host.equalsIgnoreCase("accounts.google.com")
                     || host.toLowerCase(Locale.ROOT).endsWith(".accounts.google.com"))) {
                 openExternal(uri.toString());
                 return true;
             }"""
-new_login = """            if (host != null && (host.equalsIgnoreCase("accounts.google.com")
+new_auth = """            if (host != null && (host.equalsIgnoreCase("accounts.google.com")
                     || host.toLowerCase(Locale.ROOT).endsWith(".accounts.google.com"))) {
                 pageHasError = true;
                 progressBar.setVisibility(View.GONE);
                 errorPanel.setVisibility(View.VISIBLE);
-                Toast.makeText(this,
-                        "Connexion Google requise : utilisez explicitement le navigateur ou verifiez le deploiement Apps Script.",
-                        Toast.LENGTH_LONG).show();
                 return true;
             }"""
-if old_login not in java:
-    raise RuntimeError("Ancre connexion Google introuvable")
-java = java.replace(old_login, new_login)
-java = java.replace(
-    '        items.add(0, MENU_BROWSER, 3, "Ouvrir dans Chrome / navigateur");\n', "")
+java_swap(old_auth, new_auth)
 
-# La WebView n'utilise pas les cookies Google de Chrome : elle provoque
-# une erreur de connexion Google. Une Custom Tab utilise la session Chrome.
-# Le navigateur affiche sa propre barre pour les origines non verifiees :
-# elle se replie au defilement, sans promesse de masquage total.
-java = java.replace(
-    "import android.app.Activity;",
-    """import android.app.Activity;
-import android.graphics.Color;
-import androidx.browser.customtabs.CustomTabColorSchemeParams;
-import androidx.browser.customtabs.CustomTabsIntent;""")
-activity_start = java.find("    @Override\n    protected void onCreate(Bundle savedInstanceState)")
-activity_end = java.find("    private void enterImmersiveMode()", activity_start)
-if activity_start < 0 or activity_end <= activity_start:
-    raise RuntimeError("Structure de l'activite Android introuvable")
-chrome_launcher = """
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        getWindow().setStatusBarColor(Color.rgb(12, 10, 8));
-        openKvgInChrome();
-    }
+# Certains renvois de connexion sont des redirections du document principal.
+java_swap(
+    "                pageHasError = false;\n                errorPanel.setVisibility(View.GONE);\n                progressBar.setProgress(5);",
+    """                String host = Uri.parse(url).getHost();
+                if (host != null && (host.equalsIgnoreCase("accounts.google.com")
+                        || host.toLowerCase(Locale.ROOT).endsWith(".accounts.google.com"))) {
+                    pageHasError = true;
+                    view.stopLoading();
+                    progressBar.setVisibility(View.GONE);
+                    errorPanel.setVisibility(View.VISIBLE);
+                    return;
+                }
+                pageHasError = false;
+                errorPanel.setVisibility(View.GONE);
+                progressBar.setProgress(5);""")
 
-    // Au retour de l'onglet Chrome, fermer l'ecran de lancement natif.
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        finish();
-    }
-
-    private void openKvgInChrome() {
-        Uri destination = Uri.parse(START_URL);
+# La fleche dans la barre native donne explicitement acces a Chrome.
+chrome_method = """
+    private void openInChrome() {
+        Intent chrome = new Intent(Intent.ACTION_VIEW, Uri.parse(START_URL));
+        chrome.setPackage("com.android.chrome");
         try {
-            CustomTabColorSchemeParams colors = new CustomTabColorSchemeParams.Builder()
-                .setToolbarColor(Color.rgb(15, 13, 11))
-                .setNavigationBarColor(Color.rgb(15, 13, 11))
-                .build();
-            CustomTabsIntent tab = new CustomTabsIntent.Builder()
-                .setDefaultColorSchemeParams(colors)
-                .setShowTitle(true)
-                .setUrlBarHidingEnabled(true)
-                .setShareState(CustomTabsIntent.SHARE_STATE_OFF)
-                .build();
-            // Chrome reprend sa session Google existante.
-            // En son absence, ouvrir le navigateur par defaut.
-            tab.intent.setPackage("com.android.chrome");
-            tab.launchUrl(this, destination);
-        } catch (Exception e) {
-            try {
-                Intent browser = new Intent(Intent.ACTION_VIEW, destination);
-                startActivity(browser);
-            } catch (Exception unavailable) {
-                Toast.makeText(this, "Aucun navigateur disponible", Toast.LENGTH_LONG).show();
-                finish();
-            }
+            startActivity(chrome);
+        } catch (ActivityNotFoundException exception) {
+            openExternal(START_URL);
         }
     }
 
 """
-java = java[:activity_start] + chrome_launcher + java[activity_end:]
+java_swap("    private void openExternal(String url) {",
+          chrome_method + "    private void openExternal(String url) {")
+# Ne jamais ouvrir Chrome par defaut depuis les commandes du site ;
+# seuls les clics sur la fleche de la barre native le declenchent.
 
 (java_dir / "MainActivity.java").write_text(java, encoding="utf-8")
 
@@ -216,16 +143,29 @@ for source_name, target_name in [
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source_file, target)
 
-# Supprimer la barre d'outils de 54 dp.
-# Le site gere lui-meme sa navigation et l'actualisation, sans menu Android.
+# Affichage integre : titre KVG Lab Master + deux commandes compactes.
 layout = (root / "activity_main.xml").read_text(encoding="utf-8")
-top_start = layout.find('    <LinearLayout\n        android:id="@+id/top_bar"')
-top_end = layout.find('    <ProgressBar', top_start)
-if top_start < 0 or top_end < top_start:
-    raise RuntimeError("Barre d'outils introuvable dans activity_main.xml")
-layout = layout[:top_start] + layout[top_end:]
-anchor = "    </FrameLayout>\n</LinearLayout>"
-# Supprimer egalement le bouton du navigateur presente dans le panneau d'erreur.
+def layout_swap(old, new):
+    global layout
+    if old not in layout:
+        raise RuntimeError("Ressource layout modifiee : " + old[:70])
+    layout = layout.replace(old, new, 1)
+
+layout_swap('android:layout_height="54dp"', 'android:layout_height="48dp"')
+layout_swap('android:background="@color/purple"', 'android:background="#14110D"')
+layout_swap('android:paddingStart="12dp"', 'android:paddingStart="8dp"')
+layout_swap('android:layout_width="38dp"\n            android:layout_height="38dp"',
+            'android:layout_width="30dp"\n            android:layout_height="30dp"')
+layout_swap('android:textColor="#FFFFFF"\n            android:textSize="18sp"',
+            'android:textColor="#F5D98A"\n            android:textSize="17sp"')
+# Icones action a taille raisonnable : rafraichir et ouvrir Chrome.
+layout_swap('android:text="↻"\n            android:textSize="29sp"',
+            'android:text="↻"\n            android:textSize="26sp"')
+layout_swap('android:text="⋮"\n            android:textSize="28sp"',
+            'android:text="↗"\n            android:textSize="27sp"')
+layout_swap('android:id="@+id/button_menu"\n        android:layout_width="48dp"',
+            'android:id="@+id/button_menu"\n        android:layout_width="48dp"')
+# Supprimer le second bouton Chrome du panneau d'erreur, inutile.
 browser_button = layout.find('            <Button\n                android:id="@+id/button_browser"')
 if browser_button < 0:
     raise RuntimeError("Bouton navigateur introuvable dans activity_main.xml")
@@ -233,6 +173,7 @@ browser_button_end = layout.find(" />", browser_button)
 if browser_button_end < 0:
     raise RuntimeError("Balise bouton navigateur mal formee")
 layout = layout[:browser_button] + layout[browser_button_end + 3:]
+
 (res / "layout/activity_main.xml").write_text(layout, encoding="utf-8")
 
 manifest = (root / "AndroidManifest.xml").read_text(encoding="utf-8")
@@ -244,9 +185,9 @@ manifest = manifest.replace("Theme.LaRentree", "Theme.LabMaster")
     <string name="app_name">KVG Lab Master</string>
     <string name="toolbar_title">KVG Lab Master</string>
     <string name="refresh">Actualiser</string>
-    <string name="menu">Options</string>
+    <string name="menu">Ouvrir dans Chrome</string>
     <string name="site_unavailable">Impossible d’ouvrir la page</string>
-    <string name="site_unavailable_hint">Connexion impossible. Vérifiez Internet et les autorisations de votre accès KVG, puis réessayez.</string>
+    <string name="site_unavailable_hint">Vérifiez Internet puis réessayez. Si Google demande une connexion, touchez la flèche en haut à droite pour ouvrir Chrome. La connexion Chrome ne se transfère pas automatiquement dans l’application.</string>
     <string name="retry">Réessayer</string>
     <string name="open_browser">Ouvrir dans le navigateur</string>
 </resources>
@@ -286,4 +227,4 @@ for density, size in densities.items():
         icon.save(d / name, optimize=True)
 fg = im.resize((432, 432), Image.Resampling.LANCZOS)
 fg.save(res / "drawable-nodpi/ic_launcher_foreground.png", optimize=True)
-print("KVG Lab Master Android 1.3.0: onglet Chrome integre pour la connexion Google, sans lien a saisir.")
+print("KVG Lab Master Android 1.4.0: WebView integree, titre, Chrome sur commande et actualisation.")
