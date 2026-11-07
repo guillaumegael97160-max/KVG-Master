@@ -83,7 +83,7 @@ public class MainActivity extends Activity {
 
         findViewById(R.id.button_refresh).setOnClickListener(view -> reload());
         findViewById(R.id.button_menu).setOnClickListener(v ->
-                openExternal(webView.getUrl() == null ? START_URL : webView.getUrl()));
+                openInside(webView.getUrl() == null ? START_URL : webView.getUrl()));
         findViewById(R.id.button_logo).setOnLongClickListener(v -> {
             desktopMode = !desktopMode;
             getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(PREF_DESKTOP, desktopMode).apply();
@@ -92,7 +92,7 @@ public class MainActivity extends Activity {
             return true;
         });
         findViewById(R.id.button_retry).setOnClickListener(view -> reload());
-        findViewById(R.id.button_browser).setOnClickListener(view -> openExternal(START_URL));
+        findViewById(R.id.button_browser).setOnClickListener(view -> openInside(START_URL));
 
         if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) {
             webView.loadUrl(START_URL);
@@ -221,7 +221,7 @@ public class MainActivity extends Activity {
             String host = uri.getHost();
             if (host != null && (host.equalsIgnoreCase("accounts.google.com")
                     || host.toLowerCase(Locale.ROOT).endsWith(".accounts.google.com"))) {
-                openExternal(uri.toString());
+                openInside(uri.toString());
                 return true;
             }
             return false; // rester dans l'application pour le site et ses redirections
@@ -271,7 +271,7 @@ public class MainActivity extends Activity {
                     webView.loadUrl(START_URL);
                     return true;
                 case MENU_BROWSER:
-                    openExternal(webView.getUrl() == null ? START_URL : webView.getUrl());
+                    openInside(webView.getUrl() == null ? START_URL : webView.getUrl());
                     return true;
                 case MENU_SHARE:
                     Intent share = new Intent(Intent.ACTION_SEND);
@@ -303,6 +303,20 @@ public class MainActivity extends Activity {
         errorPanel.setVisibility(View.GONE);
         if (webView.getUrl() == null) webView.loadUrl(START_URL);
         else webView.reload();
+    }
+
+    /** Page supplementaire interne, sans lancer l'application Chrome. */
+    private void openInside(String requestedUrl) {
+        String url = requestedUrl == null ? START_URL : requestedUrl;
+        Uri uri;
+        try { uri = Uri.parse(url); } catch (Exception error) { uri = Uri.parse(START_URL); }
+        String scheme = uri.getScheme();
+        if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
+            uri = Uri.parse(START_URL);
+        }
+        Intent page = new Intent(this, BrowserActivity.class);
+        page.putExtra(BrowserActivity.EXTRA_URL, uri.toString());
+        startActivity(page);
     }
 
     private void openExternal(String url) {

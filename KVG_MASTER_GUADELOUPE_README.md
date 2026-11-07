@@ -1,20 +1,16 @@
-# KVG Master Guadeloupe — application Android compacte
-Cette branche est isolée de l'application KVG Lab Master et de l'ancienne application La Rentrée.
+# KVG Master Guadeloupe — navigation totalement integree
+Cette version de l'APK conserve le tableau de bord principal.
+Le bouton ↗ lance une seconde activité WebView / Chromium **dans la meme application**,
+sans demarrer l'application Chrome et sans barre d'adresse.
+La seconde page affiche uniquement Retour et Actualiser sur une barre de 34dp.
+L'appui long sur le logo de la page principale bascule telephone / bureau.
 
-## Application
-- Site directement chargé : https://script.google.com/macros/s/AKfycbyACsMvk1luR3c7ClDbIA-8Q1GmiF1VnYP3hLs9WigTzJbb6rk-SPeZRtHK7xHStekJGg/exec
-- Une seule WebView intégrée (Chromium Android), aucune barre d'adresse et aucun onglet interne.
-- Barre noire et dorée compacte : logo, Actualiser, Chrome.
-- Le bouton Chrome ouvre la page en cours dans Google Chrome, avec navigateur par défaut en repli.
-- Appui long sur le logo : bascule affichage téléphone/ordinateur.
-- Le zoom au pincement est activé, mode PC chargé avec la largeur globale.
-- L'application n'ajoute aucun droit Google Sheets. L'accès aux stocks dépend toujours du serveur Apps Script et du déploiement.
+## Limites
+WebView utilise le moteur Chromium d'Android et **ne constitue pas l'application Chrome**.
+L'authentification Google peut refuser les WebView integrees pour certains comptes et
+certaines autorisations. Ce comportement ne peut pas etre contourne par un habillage visuel.
+Le projet ne change pas les droits Google Sheets du serveur Apps Script.
 
-## Compilation
-Dans Actions, ouvrir **Compiler APK KVG Master Guadeloupe compact**.
-Récupérer l'artifact **KVG-Master-Guadeloupe-APK** ; il contient **KVG-Master-Guadeloupe.apk**.
-
-Cette compilation de test est signée automatiquement par Android Gradle. Pour une publication Play Store, utiliser une signature de release dédiée.
-
-## Maintenance
-Les modifications du site Apps Script sont visibles sans recompiler l'application tant que son lien /exec reste inchangé.
+## Mise a jour
+Le package est le meme que celui de la premiere version compacte.
+Installer l'APK mis a jour par-dessus si la signature est identique.
