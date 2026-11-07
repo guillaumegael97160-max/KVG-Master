@@ -64,8 +64,7 @@ java = java.replace("La Rentrée", "KVG Lab Master")
 # KVG Lab Master utilise une WebView native en plein ecran.
 java = java.replace(
     "        findViewById(R.id.button_refresh).setOnClickListener(view -> reload());\n", "")
-java = java.replace(
-    "        findViewById(R.id.button_browser).setOnClickListener(view -> openExternal(START_URL));\n", "")
+# Le bouton dans le panneau d'erreur reste utilisable uniquement sur action volontaire.
 
 # En affichage immersif, le conteneur n'ajoute pas les anciennes marges systeme.
 start = java.find("        // Android 15+ applique")
