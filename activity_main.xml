@@ -3,122 +3,47 @@
     android:id="@+id/app_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center"
     android:orientation="vertical"
-    android:background="#090806">
-
-    <!-- Barre de seulement 38 dp : logo, actualisation, Chrome. -->
-    <LinearLayout
-        android:id="@+id/top_bar"
+    android:padding="24dp"
+    android:background="#0C0A08">
+    <ImageView
+        android:layout_width="108dp"
+        android:layout_height="108dp"
+        android:layout_marginBottom="24dp"
+        android:src="@drawable/kvg_master_logo"
+        android:scaleType="fitCenter"
+        android:contentDescription="Logo KVG Master Guadeloupe"/>
+    <TextView
         android:layout_width="match_parent"
-        android:layout_height="38dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="7dp"
-        android:paddingEnd="4dp"
-        android:background="#130F0A">
-
-        <ImageView
-            android:id="@+id/button_logo"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@drawable/kvg_master_logo"
-            android:scaleType="fitCenter"
-            android:contentDescription="KVG Master ; appui long pour changer le mode téléphone ou ordinateur" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center_vertical"
-            android:layout_marginStart="8dp"
-            android:text="@string/toolbar_title"
-            android:textColor="#E5C470"
-            android:textSize="13sp"
-            android:singleLine="true" />
-
-        <TextView
-            android:id="@+id/button_refresh"
-            android:layout_width="40dp"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="↻"
-            android:textSize="26sp"
-            android:textColor="#F2D797"
-            android:contentDescription="@string/refresh"
-            android:background="?android:attr/selectableItemBackgroundBorderless" />
-
-        <TextView
-            android:id="@+id/button_menu"
-            android:layout_width="40dp"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="↗"
-            android:textSize="24sp"
-            android:textColor="#F2D797"
-            android:contentDescription="@string/open_browser"
-            android:background="?android:attr/selectableItemBackgroundBorderless" />
-    </LinearLayout>
-
-    <ProgressBar
-        android:id="@+id/page_progress"
-        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="KVG Master Guadeloupe"
+        android:textColor="#E9CB82"
+        android:textSize="23sp"
+        android:textStyle="bold"/>
+    <TextView
         android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:max="100"
-        android:progressTint="#DAB763"
-        android:visibility="gone"/>
-
-    <FrameLayout
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="22dp"
+        android:gravity="center"
+        android:text="Accès privé Google · Compte propriétaire"
+        android:textColor="#B3AFA4"
+        android:textSize="13sp"/>
+    <Button
+        android:id="@+id/open_kvg"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-        <WebView
-            android:id="@+id/web_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#090806"/>
-
-        <LinearLayout
-            android:id="@+id/error_panel"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:padding="24dp"
-            android:background="#100E0B"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/site_unavailable"
-                android:textColor="#EDD292"
-                android:textStyle="bold"
-                android:textSize="20sp"
-                android:gravity="center"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/site_unavailable_hint"
-                android:textColor="#CEC2AD"
-                android:textSize="14sp"
-                android:gravity="center"/>
-
-            <Button
-                android:id="@+id/button_retry"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
-                android:text="@string/retry"/>
-
-            <Button
-                android:id="@+id/button_browser"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/open_browser"/>
-        </LinearLayout>
-    </FrameLayout>
+        android:layout_height="50dp"
+        android:text="Ouvrir KVG Master"
+        android:textAllCaps="false"
+        android:textSize="16sp"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:text="La connexion Google utilise le navigateur sécurisé du téléphone. La barre du domaine se replie pendant la lecture."
+        android:textColor="#938E84"
+        android:textSize="11sp"/>
 </LinearLayout>
