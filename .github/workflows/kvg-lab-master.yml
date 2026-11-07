@@ -1,0 +1,119 @@
+name: Construire APK KVG Lab Master
+
+on:
+  push:
+    branches: [kvg-lab-master-android]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apk-labmaster:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recupérer les sources
+        uses: actions/checkout@v4
+      - name: Installer Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Installer Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Installer Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Installer SDK 35
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Generer le projet Lab Master en isolant La Rentree
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          root=Path.cwd()
+          app=root/'labmaster-build/app/src/main'
+          java=app/'java/com/laboratoirekvg/labmaster'
+          res=app/'res'
+          java.mkdir(parents=True,exist_ok=True)
+          (res/'layout').mkdir(parents=True,exist_ok=True)
+          (res/'values').mkdir(parents=True,exist_ok=True)
+          (res/'drawable-nodpi').mkdir(parents=True,exist_ok=True)
+          src=(root/'MainActivity.java').read_text(encoding='utf-8')
+          assert 'class MainActivity' in src
+          src=src.replace('com.laboratoirekvg.larentree','com.laboratoirekvg.labmaster')
+          src=src.replace('la_rentree_preferences','kvg_lab_master_preferences')
+          (java/'MainActivity.java').write_text(src,encoding='utf-8')
+          manifest=(root/'AndroidManifest.xml').read_text(encoding='utf-8')
+          manifest=manifest.replace('@mipmap/ic_launcher_round','@drawable/kvg_master_logo')
+          manifest=manifest.replace('@mipmap/ic_launcher','@drawable/kvg_master_logo')
+          manifest=manifest.replace('Theme.LaRentree','Theme.KVGLabMaster')
+          (app/'AndroidManifest.xml').write_text(manifest,encoding='utf-8')
+          layout=(root/'activity_main.xml').read_text(encoding='utf-8')
+          layout=layout.replace('@mipmap/ic_launcher','@drawable/kvg_master_logo')
+          layout=layout.replace('@color/purple','@color/gold_background')
+          layout=layout.replace('android:background="#FFFFFF"','android:background="#0A0907"')
+          (res/'layout/activity_main.xml').write_text(layout,encoding='utf-8')
+          strings=(root/'strings.xml').read_text(encoding='utf-8')
+          strings=strings.replace('La Rentrée – Mon Déo','KVG Lab Master').replace('La Rentrée','KVG Lab Master')
+          (res/'values/strings.xml').write_text(strings,encoding='utf-8')
+          style=(root/'styles.xml').read_text(encoding='utf-8')
+          style=style.replace('Theme.LaRentree','Theme.KVGLabMaster')
+          style=style.replace('@color/purple','@color/gold_background')
+          style=style.replace('android:navigationBarColor">#FFFFFF','android:navigationBarColor">#090806')
+          (res/'values/styles.xml').write_text(style,encoding='utf-8')
+          colors='''<resources>
+              <color name="purple">#14110C</color>
+              <color name="gold_background">#151109</color>
+              <color name="pale_lavender">#17120A</color>
+              <color name="launcher_background">#080705</color>
+          </resources>
+          '''
+          (res/'values/colors.xml').write_text(colors,encoding='utf-8')
+          logo=root/'labmaster/icon.webp'
+          assert logo.is_file() and logo.stat().st_size>2000
+          shutil.copy2(logo,res/'drawable-nodpi/kvg_master_logo.webp')
+          project=root/'labmaster-build'
+          (project/'settings.gradle').write_text("""pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+          rootProject.name = 'KVGLabMaster'
+          include ':app'
+          """,encoding='utf-8')
+          (project/'build.gradle').write_text("plugins { id 'com.android.application' version '8.7.3' apply false }\n",encoding='utf-8')
+          (project/'gradle.properties').write_text("org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8\nandroid.useAndroidX=true\n",encoding='utf-8')
+          (project/'app/build.gradle').write_text("""plugins { id 'com.android.application' }
+          android {
+              namespace 'com.laboratoirekvg.labmaster'
+              compileSdk 35
+              defaultConfig {
+                  applicationId 'com.laboratoirekvg.labmaster'
+                  minSdk 24
+                  targetSdk 35
+                  versionCode 1
+                  versionName '1.0.0'
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          """,encoding='utf-8')
+          print('KVG Lab Master construit depuis les sources existantes. Ancienne app préservée.')
+          PY
+      - name: Compiler APK installable
+        working-directory: labmaster-build
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+      - name: Verifier et nommer APK
+        run: |
+          test -s labmaster-build/app/build/outputs/apk/debug/app-debug.apk
+          mkdir -p dist
+          cp labmaster-build/app/build/outputs/apk/debug/app-debug.apk dist/KVG-Lab-Master.apk
+      - name: Publier APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: KVG-Lab-Master-APK
+          path: dist/KVG-Lab-Master.apk
+          if-no-files-found: error
+          retention-days: 30
