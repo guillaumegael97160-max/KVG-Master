@@ -41,8 +41,8 @@ android {
         applicationId 'com.laboratoirekvg.labmaster'
         minSdk 24
         targetSdk 35
-        versionCode 2
-        versionName '1.1.0'
+        versionCode 3
+        versionName '1.2.0'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -64,7 +64,15 @@ java = java.replace("La Rentrée", "KVG Lab Master")
 # KVG Lab Master utilise une WebView native en plein ecran.
 java = java.replace(
     "        findViewById(R.id.button_refresh).setOnClickListener(view -> reload());\n", "")
-# Le bouton dans le panneau d'erreur reste utilisable uniquement sur action volontaire.
+# Aucun bouton d'ouverture du navigateur ni barre d'adresse dans l'application.
+java = java.replace(
+    "        findViewById(R.id.button_menu).setOnClickListener(this::showMenu);\n", "")
+java = java.replace(
+    "        findViewById(R.id.button_browser).setOnClickListener(view -> openExternal(START_URL));\n", "")
+java = java.replace(
+    "        desktopMode = preferences.getBoolean(PREF_DESKTOP, isTablet);",
+    "        desktopMode = false;")
+
 
 # En affichage immersif, le conteneur n'ajoute pas les anciennes marges systeme.
 start = java.find("        // Android 15+ applique")
@@ -145,7 +153,7 @@ for source_name, target_name in [
     shutil.copy2(source_file, target)
 
 # Supprimer la barre d'outils de 54 dp.
-# Le menu flottant conserve l'actualisation et le mode ordinateur.
+# Le site gere lui-meme sa navigation et l'actualisation, sans menu Android.
 layout = (root / "activity_main.xml").read_text(encoding="utf-8")
 top_start = layout.find('    <LinearLayout\n        android:id="@+id/top_bar"')
 top_end = layout.find('    <ProgressBar', top_start)
@@ -153,22 +161,14 @@ if top_start < 0 or top_end < top_start:
     raise RuntimeError("Barre d'outils introuvable dans activity_main.xml")
 layout = layout[:top_start] + layout[top_end:]
 anchor = "    </FrameLayout>\n</LinearLayout>"
-floating_menu = """        <TextView
-            android:id="@+id/button_menu"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="9dp"
-            android:background="#CC17130E"
-            android:gravity="center"
-            android:text="⋮"
-            android:textColor="#F2D58B"
-            android:textSize="27sp"
-            android:contentDescription="@string/menu" />
-"""
-if anchor not in layout:
-    raise RuntimeError("Ancre menu flottant introuvable")
-layout = layout.replace(anchor, floating_menu + anchor)
+# Supprimer egalement le bouton du navigateur presente dans le panneau d'erreur.
+browser_button = layout.find('            <Button\n                android:id="@+id/button_browser"')
+if browser_button < 0:
+    raise RuntimeError("Bouton navigateur introuvable dans activity_main.xml")
+browser_button_end = layout.find(" />", browser_button)
+if browser_button_end < 0:
+    raise RuntimeError("Balise bouton navigateur mal formee")
+layout = layout[:browser_button] + layout[browser_button_end + 3:]
 (res / "layout/activity_main.xml").write_text(layout, encoding="utf-8")
 
 manifest = (root / "AndroidManifest.xml").read_text(encoding="utf-8")
@@ -182,7 +182,7 @@ manifest = manifest.replace("Theme.LaRentree", "Theme.LabMaster")
     <string name="refresh">Actualiser</string>
     <string name="menu">Options</string>
     <string name="site_unavailable">Impossible d’ouvrir la page</string>
-    <string name="site_unavailable_hint">Vérifiez votre connexion et les autorisations du site Apps Script. Vous pouvez aussi ouvrir le site dans votre navigateur.</string>
+    <string name="site_unavailable_hint">Connexion impossible. Vérifiez Internet et les autorisations de votre accès KVG, puis réessayez.</string>
     <string name="retry">Réessayer</string>
     <string name="open_browser">Ouvrir dans le navigateur</string>
 </resources>
@@ -222,4 +222,4 @@ for density, size in densities.items():
         icon.save(d / name, optimize=True)
 fg = im.resize((432, 432), Image.Resampling.LANCZOS)
 fg.save(res / "drawable-nodpi/ic_launcher_foreground.png", optimize=True)
-print("KVG Lab Master: source Android assembled; independent applicationId, oil logo, and site wrapper.")
+print("KVG Lab Master Android 1.2.0: plein ecran smartphone, sans navigateur, sans lien a saisir.")
