@@ -163,8 +163,6 @@ layout_swap('android:text="↻"\n            android:textSize="29sp"',
             'android:text="↻"\n            android:textSize="26sp"')
 layout_swap('android:text="⋮"\n            android:textSize="28sp"',
             'android:text="↗"\n            android:textSize="27sp"')
-layout_swap('android:id="@+id/button_menu"\n        android:layout_width="48dp"',
-            'android:id="@+id/button_menu"\n        android:layout_width="48dp"')
 # Supprimer le second bouton Chrome du panneau d'erreur, inutile.
 browser_button = layout.find('            <Button\n                android:id="@+id/button_browser"')
 if browser_button < 0:
