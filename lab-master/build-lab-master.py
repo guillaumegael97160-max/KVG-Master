@@ -41,13 +41,16 @@ android {
         applicationId 'com.laboratoirekvg.labmaster'
         minSdk 24
         targetSdk 35
-        versionCode 3
-        versionName '1.2.0'
+        versionCode 4
+        versionName '1.3.0'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+}
+dependencies {
+    implementation 'androidx.browser:browser:1.8.0'
 }
 """)
 
@@ -139,6 +142,67 @@ if old_login not in java:
 java = java.replace(old_login, new_login)
 java = java.replace(
     '        items.add(0, MENU_BROWSER, 3, "Ouvrir dans Chrome / navigateur");\n', "")
+
+# La WebView n'utilise pas les cookies Google de Chrome : elle provoque
+# une erreur de connexion Google. Une Custom Tab utilise la session Chrome.
+# Le navigateur affiche sa propre barre pour les origines non verifiees :
+# elle se replie au defilement, sans promesse de masquage total.
+java = java.replace(
+    "import android.app.Activity;",
+    """import android.app.Activity;
+import android.graphics.Color;
+import androidx.browser.customtabs.CustomTabColorSchemeParams;
+import androidx.browser.customtabs.CustomTabsIntent;""")
+activity_start = java.find("    @Override\n    protected void onCreate(Bundle savedInstanceState)")
+activity_end = java.find("    private void enterImmersiveMode()", activity_start)
+if activity_start < 0 or activity_end <= activity_start:
+    raise RuntimeError("Structure de l'activite Android introuvable")
+chrome_launcher = """
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getWindow().setStatusBarColor(Color.rgb(12, 10, 8));
+        openKvgInChrome();
+    }
+
+    // Au retour de l'onglet Chrome, fermer l'ecran de lancement natif.
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        finish();
+    }
+
+    private void openKvgInChrome() {
+        Uri destination = Uri.parse(START_URL);
+        try {
+            CustomTabColorSchemeParams colors = new CustomTabColorSchemeParams.Builder()
+                .setToolbarColor(Color.rgb(15, 13, 11))
+                .setNavigationBarColor(Color.rgb(15, 13, 11))
+                .build();
+            CustomTabsIntent tab = new CustomTabsIntent.Builder()
+                .setDefaultColorSchemeParams(colors)
+                .setShowTitle(true)
+                .setUrlBarHidingEnabled(true)
+                .setShareState(CustomTabsIntent.SHARE_STATE_OFF)
+                .build();
+            // Chrome reprend sa session Google existante.
+            // En son absence, ouvrir le navigateur par defaut.
+            tab.intent.setPackage("com.android.chrome");
+            tab.launchUrl(this, destination);
+        } catch (Exception e) {
+            try {
+                Intent browser = new Intent(Intent.ACTION_VIEW, destination);
+                startActivity(browser);
+            } catch (Exception unavailable) {
+                Toast.makeText(this, "Aucun navigateur disponible", Toast.LENGTH_LONG).show();
+                finish();
+            }
+        }
+    }
+
+"""
+java = java[:activity_start] + chrome_launcher + java[activity_end:]
+
 (java_dir / "MainActivity.java").write_text(java, encoding="utf-8")
 
 for source_name, target_name in [
@@ -222,4 +286,4 @@ for density, size in densities.items():
         icon.save(d / name, optimize=True)
 fg = im.resize((432, 432), Image.Resampling.LANCZOS)
 fg.save(res / "drawable-nodpi/ic_launcher_foreground.png", optimize=True)
-print("KVG Lab Master Android 1.2.0: plein ecran smartphone, sans navigateur, sans lien a saisir.")
+print("KVG Lab Master Android 1.3.0: onglet Chrome integre pour la connexion Google, sans lien a saisir.")
