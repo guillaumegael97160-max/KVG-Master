@@ -34,7 +34,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final String START_URL = "https://script.google.com/macros/s/AKfycbyACsMvk1luR3c7ClDbIA-8Q1GmiF1VnYP3hLs9WigTzJbb6rk-SPeZRtHK7xHStekJGg/exec";
-    private static final String PREFS = "la_rentree_preferences";
+    private static final String PREFS = "kvg_guadeloupe_compact_preferences";
     private static final String PREF_DESKTOP = "desktop_mode";
     private static final int REQUEST_FILE = 602;
 
@@ -82,7 +82,15 @@ public class MainActivity extends Activity {
         initializeWebView();
 
         findViewById(R.id.button_refresh).setOnClickListener(view -> reload());
-        findViewById(R.id.button_menu).setOnClickListener(this::showMenu);
+        findViewById(R.id.button_menu).setOnClickListener(v ->
+                openExternal(webView.getUrl() == null ? START_URL : webView.getUrl()));
+        findViewById(R.id.button_logo).setOnLongClickListener(v -> {
+            desktopMode = !desktopMode;
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(PREF_DESKTOP, desktopMode).apply();
+            applyDesktopMode(true);
+            Toast.makeText(this, desktopMode ? "Affichage ordinateur" : "Affichage téléphone", Toast.LENGTH_SHORT).show();
+            return true;
+        });
         findViewById(R.id.button_retry).setOnClickListener(view -> reload());
         findViewById(R.id.button_browser).setOnClickListener(view -> openExternal(START_URL));
 
@@ -300,7 +308,14 @@ public class MainActivity extends Activity {
     private void openExternal(String url) {
         try {
             Intent browser = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            startActivity(browser);
+            browser.addCategory(Intent.CATEGORY_BROWSABLE);
+            browser.setPackage("com.android.chrome");
+            try {
+                startActivity(browser);
+            } catch (ActivityNotFoundException chromeAbsent) {
+                browser.setPackage(null);
+                startActivity(browser);
+            }
         } catch (Exception exception) {
             Toast.makeText(this, "Aucun navigateur compatible trouvé", Toast.LENGTH_LONG).show();
         }
