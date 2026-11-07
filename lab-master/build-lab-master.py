@@ -94,6 +94,7 @@ manifest = manifest.replace("Theme.LaRentree", "Theme.LabMaster")
 (res / "values/colors.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="purple">#B98B39</color>
+    <color name="pale_lavender">#F6F2FF</color>
     <color name="launcher_background">#090706</color>
 </resources>
 """, encoding="utf-8")
