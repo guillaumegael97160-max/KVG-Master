@@ -1,8 +1,8 @@
-name: Compilation APK Discours Pointe d Or
+name: APK Discours Pointe d Or Simple Plein Ecran
 on:
   push:
     branches:
-      - programme-discours-android-2026
+      - discours-pointe-or-simple-fullscreen-2026
   pull_request:
     branches:
       - main
@@ -44,56 +44,58 @@ jobs:
           cat > discours-build/app/build.gradle <<'EOF'
           plugins { id 'com.android.application' }
           android { namespace 'fr.pointeor.discours'; compileSdk 35
-          defaultConfig { applicationId 'fr.pointeor.discours.v2'; minSdk 24; targetSdk 34; versionCode 2; versionName '2.0' }
+          defaultConfig { applicationId 'fr.pointeor.discours.simple'; minSdk 24; targetSdk 34; versionCode 1; versionName '1.0' }
           compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
           EOF
           cat > discours-build/app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET"/><application android:allowBackup="false" android:usesCleartextTraffic="false" android:icon="@drawable/app_icon" android:label="Discours Pointe d’Or" android:theme="@android:style/Theme.Material.Light.NoActionBar"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>
           EOF
-          cat > discours-build/app/src/main/res/drawable/app_icon.xml <<'EOF'
-          <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-          <path android:fillColor="#10385E" android:pathData="M0,0h108v108h-108z"/>
-          <path android:fillColor="#D7A83F" android:pathData="M12,12h84v2h-84z M12,94h84v2h-84z"/>
-          <path android:fillColor="#F5D886" android:pathData="M54,22 l2,10 l9,2 l-9,2 l-2,10 l-2,-10 l-9,-2z"/>
-          <path android:strokeColor="#E5B84A" android:strokeWidth="3" android:strokeLineCap="round" android:fillColor="#00000000" android:pathData="M24,53 C35,47 46,50 54,55 C63,50 75,47 84,53 M54,55v24 M24,53v23 C37,72 45,75 54,79 C65,75 75,72 84,76 V53"/>
-          <path android:strokeColor="#FFFFFF" android:strokeWidth="2" android:strokeLineCap="round" android:fillColor="#00000000" android:pathData="M30,59 C38,56 44,57 50,61 M58,61 C65,57 72,56 78,59 M30,65 C38,62 44,64 50,67 M58,67 C65,64 72,62 78,65"/>
-          </vector>
-          EOF
+          printf '%s' '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' | base64 -d > discours-build/app/src/main/res/drawable/app_icon.png
           cat > discours-build/app/src/main/java/fr/pointeor/discours/MainActivity.java <<'EOF'
           package fr.pointeor.discours;
           import android.app.*;
+          import android.os.*;
           import android.content.*;
           import android.graphics.Color;
-          import android.graphics.drawable.GradientDrawable;
           import android.net.Uri;
-          import android.os.Bundle;
-          import android.text.InputType;
           import android.view.*;
           import android.webkit.*;
           import android.widget.*;
-          
           public class MainActivity extends Activity {
-            String url=""; WebView web; LinearLayout screen; boolean desktop=false; String mobileUA="";
-            int blue=Color.rgb(20,75,124),gold=Color.rgb(198,151,56);
-            int px(int a){return (int)(a*getResources().getDisplayMetrics().density);}
-            LinearLayout col(){LinearLayout l=new LinearLayout(this);l.setOrientation(1);return l;}
-            GradientDrawable bg(int c){GradientDrawable d=new GradientDrawable();d.setColor(c);d.setCornerRadius(px(12));return d;}
-            TextView txt(String s,int size,int c){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(c);return t;}
-            Button btn(String s){Button b=new Button(this);b.setText(s);b.setAllCaps(false);b.setTextColor(-1);b.setBackground(bg(blue));return b;}
-            boolean allowed(String u){Uri x=Uri.parse(u);return "https".equals(x.getScheme())&&"script.google.com".equals(x.getHost())&&x.getPath()!=null&&x.getPath().startsWith("/macros/s/")&&x.getPath().endsWith("/exec");}
-            void setup(String action,Runnable listener){screen=col();screen.setBackgroundColor(0xfff5f8fc);setContentView(screen);LinearLayout h=new LinearLayout(this);h.setPadding(px(12),px(8),px(12),px(8));h.setBackgroundColor(blue);h.setGravity(Gravity.CENTER_VERTICAL);TextView title=txt("✦ Discours Pointe d’Or",15,-1);h.addView(title,new LinearLayout.LayoutParams(0,px(52),1));Button b=btn(action);h.addView(b,new LinearLayout.LayoutParams(px(105),px(48)));b.setOnClickListener(v->listener.run());screen.addView(h);}
-            @Override public void onCreate(Bundle b){super.onCreate(b);getWindow().setStatusBarColor(blue);url=getPreferences(0).getString("url","https://script.google.com/macros/s/AKfycbylx016T7zZoWRVgtwMLuo9puOwCrwAAeVUSWAx34mrDBNgQMubaXI9Dq57X1bTBg0WPw/exec");desktop=getPreferences(0).getBoolean("desktop",false);if(allowed(url))site();else config();}
-            void config(){if(web!=null){web.destroy();web=null;}setup("Fermer",()->{if(allowed(url))site();});ScrollView scroll=new ScrollView(this);screen.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));LinearLayout content=col();content.setPadding(px(24),px(30),px(24),px(24));scroll.addView(content);ImageView icon=new ImageView(this);icon.setImageResource(R.drawable.app_icon);content.addView(icon,new LinearLayout.LayoutParams(px(110),px(110)));TextView t=txt("Programme des discours\nPointe d’Or",24,blue);t.setGravity(Gravity.CENTER);content.addView(t);TextView info=txt("\nColle le lien de ton site Google Apps Script Programme de discours. Il se termine par /exec. L'adresse sera mémorisée.",15,Color.DKGRAY);content.addView(info);EditText input=new EditText(this);input.setSingleLine(true);input.setText(url);input.setHint("https://script.google.com/macros/s/…/exec");input.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);content.addView(input,new LinearLayout.LayoutParams(-1,px(72)));Button go=btn("Enregistrer et ouvrir");content.addView(go,new LinearLayout.LayoutParams(-1,px(58)));go.setOnClickListener(v->{String u=input.getText().toString().trim();if(!allowed(u)){Toast.makeText(this,"Adresse /exec invalide",1).show();return;}url=u;getPreferences(0).edit().putString("url",url).apply();site();});content.addView(txt("\nLe code d’accès des anciens est géré directement par ton site.",13,Color.GRAY));}
-            boolean external(Uri uri){String host=uri.getHost()==null?"":uri.getHost().toLowerCase();String sc=uri.getScheme()==null?"":uri.getScheme();if(sc.equals("https")&&(host.equals("script.google.com")||host.endsWith("googleusercontent.com")))return false;try{startActivity(new Intent(Intent.ACTION_VIEW,uri));}catch(Exception e){Toast.makeText(this,"Impossible d’ouvrir ce lien",1).show();}return true;}
-            
-            void useMode(){if(web==null)return;web.getSettings().setUseWideViewPort(true);web.getSettings().setLoadWithOverviewMode(true);if(mobileUA.isEmpty())mobileUA=web.getSettings().getUserAgentString();}
-            void modeScript(){if(web==null)return;String js=desktop?"(function(){var m=document.querySelector('meta[name=viewport]');if(m)m.setAttribute('content','width=1280,initial-scale=1');if(document.body){document.body.classList.add('pd-forced-desktop');document.body.classList.remove('pd-forced-mobile');}var b=document.querySelector('.topactions button[onclick*=\\\"location.reload\\\"]');if(b)b.style.display='none';})();":"(function(){var m=document.querySelector('meta[name=viewport]');if(m)m.setAttribute('content','width=device-width,initial-scale=1');if(document.body){document.body.classList.remove('pd-forced-desktop');document.body.classList.add('pd-forced-mobile');}var b=document.querySelector('.topactions button[onclick*=\\\"location.reload\\\"]');if(b)b.style.display='none';})();";web.evaluateJavascript(js,null);}
-            void toggleMode(){desktop=!desktop;getPreferences(0).edit().putBoolean("desktop",desktop).apply();if(web!=null){modeScript();}siteModeLabel();}
-            void siteModeLabel(){if(screen==null||screen.getChildCount()==0)return;View h=screen.getChildAt(0);if(h instanceof LinearLayout){LinearLayout row=(LinearLayout)h;if(row.getChildCount()>=2&&row.getChildAt(1) instanceof Button){((Button)row.getChildAt(1)).setText(desktop?"▯ Téléphone":"▣ Ordinateur");}}}
-          
-            void site(){if(web!=null){web.destroy();web=null;}setup(desktop?"▯ Téléphone":"▣ Ordinateur",()->toggleMode());LinearLayout bar=(LinearLayout)screen.getChildAt(0);Button settings=btn("⚙");bar.addView(settings,new LinearLayout.LayoutParams(px(42),px(48)));settings.setOnClickListener(v->config());FrameLayout frame=new FrameLayout(this);screen.addView(frame,new LinearLayout.LayoutParams(-1,0,1));web=new WebView(this);web.getSettings().setJavaScriptEnabled(true);web.getSettings().setDomStorageEnabled(true);web.getSettings().setAllowFileAccess(false);useMode();CookieManager.getInstance().setAcceptThirdPartyCookies(web,true);frame.addView(web,new FrameLayout.LayoutParams(-1,-1));ProgressBar p=new ProgressBar(this);FrameLayout.LayoutParams fp=new FrameLayout.LayoutParams(px(48),px(48),Gravity.CENTER);frame.addView(p,fp);web.setWebChromeClient(new WebChromeClient());web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){return external(r.getUrl());}@Override public void onPageFinished(WebView v,String u){p.setVisibility(View.GONE);modeScript();}@Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame())Toast.makeText(MainActivity.this,"Vérifie la connexion Internet.",1).show();}});web.loadUrl(url);}
-            @Override public void onBackPressed(){if(web!=null&&web.canGoBack())web.goBack();else if(web!=null)config();else super.onBackPressed();}
+           static final String URL="https://script.google.com/macros/s/AKfycbzbBNlu3LjTDLEHEfxUj6reoDjKQmyv2zDrOZ3gdq_i9HLGqQkZIruyxqr5zkY4uAaU/exec";
+           WebView web; FrameLayout root; View splash;
+           int dp(int v){return (int)(getResources().getDisplayMetrics().density*v);}
+           @SuppressWarnings("deprecation") void immersive(){
+            int flags=View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY|View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+            getWindow().getDecorView().setSystemUiVisibility(flags);
+            if(Build.VERSION.SDK_INT>=30){android.view.WindowInsetsController c=getWindow().getInsetsController();if(c!=null){c.hide(android.view.WindowInsets.Type.statusBars()|android.view.WindowInsets.Type.navigationBars());c.setSystemBarsBehavior(android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);}}
+           }
+           @Override public void onCreate(Bundle b){super.onCreate(b);getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);immersive();
+            root=new FrameLayout(this);web=new WebView(this);root.addView(web,new FrameLayout.LayoutParams(-1,-1));setContentView(root);
+            LinearLayout loading=new LinearLayout(this);loading.setGravity(Gravity.CENTER);loading.setOrientation(1);loading.setBackgroundColor(0xff10385e);
+            ImageView img=new ImageView(this);img.setImageResource(R.drawable.app_icon);loading.addView(img,new LinearLayout.LayoutParams(dp(130),dp(130)));
+            TextView txt=new TextView(this);txt.setText("Discours Pointe d’Or");txt.setTextColor(-1);txt.setTextSize(19);txt.setGravity(Gravity.CENTER);loading.addView(txt,new LinearLayout.LayoutParams(-1,dp(65)));
+            ProgressBar bar=new ProgressBar(this);loading.addView(bar,new LinearLayout.LayoutParams(dp(45),dp(45)));splash=loading;root.addView(splash,new FrameLayout.LayoutParams(-1,-1));
+            WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setUseWideViewPort(true);s.setLoadWithOverviewMode(true);s.setAllowFileAccess(false);s.setAllowContentAccess(false);s.setJavaScriptCanOpenWindowsAutomatically(true);s.setSupportMultipleWindows(true);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+            CookieManager.getInstance().setAcceptCookie(true);CookieManager.getInstance().setAcceptThirdPartyCookies(web,true);
+            web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView w,WebResourceRequest r){return route(r.getUrl());}
+            @Override public void onPageFinished(WebView w,String u){if(splash!=null){root.removeView(splash);splash=null;}immersive();}
+            @Override public void onReceivedError(WebView w,WebResourceRequest req,WebResourceError e){if(req.isForMainFrame()){if(splash!=null){root.removeView(splash);splash=null;}new AlertDialog.Builder(MainActivity.this).setTitle("Connexion indisponible").setMessage("Vérifie ta connexion Internet.").setPositiveButton("Réessayer",(d,i)->web.loadUrl(URL)).setNegativeButton("Fermer",(d,i)->finish()).show();}}});
+            web.setWebChromeClient(new WebChromeClient(){@Override public boolean onCreateWindow(WebView source,boolean dialog,boolean gesture,Message msg){
+            WebView child=new WebView(MainActivity.this);child.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){if(!route(r.getUrl()))web.loadUrl(r.getUrl().toString());v.destroy();return true;}});
+            WebView.WebViewTransport t=(WebView.WebViewTransport)msg.obj;t.setWebView(child);msg.sendToTarget();return true;}});
+            web.loadUrl(URL);
+           }
+           boolean route(Uri u){String scheme=u.getScheme()==null?"":u.getScheme().toLowerCase();String h=u.getHost()==null?"":u.getHost().toLowerCase();
+            if("https".equals(scheme)||"http".equals(scheme)){if(h.equals("wa.me")||h.equals("api.whatsapp.com")||h.equals("web.whatsapp.com"))return external(u);return false;}
+            if("intent".equals(scheme)){try{startActivity(Intent.parseUri(u.toString(),Intent.URI_INTENT_SCHEME));}catch(Exception ignored){}return true;}
+            if(scheme.equals("tel")||scheme.equals("mailto")||scheme.equals("sms")||scheme.equals("whatsapp"))return external(u);return true;
+           }
+           boolean external(Uri u){try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception e){new AlertDialog.Builder(this).setMessage("Aucune application disponible pour ouvrir ce lien.").setPositiveButton("OK",null).show();}return true;}
+           @Override public void onWindowFocusChanged(boolean x){super.onWindowFocusChanged(x);if(x)immersive();}
+           @Override public void onBackPressed(){if(web!=null&&web.canGoBack())web.goBack();else new AlertDialog.Builder(this).setMessage("Fermer Discours Pointe d’Or ?").setNegativeButton("Annuler",null).setPositiveButton("Fermer",(d,i)->finish()).show();}
+           @Override protected void onDestroy(){if(web!=null){web.stopLoading();web.destroy();web=null;}super.onDestroy();}
           }
           EOF
       - name: Installer SDK Android
@@ -113,6 +115,6 @@ jobs:
         run: cd discours-build && gradle --no-daemon --stacktrace :app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: Programme-Discours-Pointe-Or-APK
+          name: Discours-Pointe-Or-Simple-PleinEcran-APK
           path: discours-build/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
