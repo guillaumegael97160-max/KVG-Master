@@ -1,0 +1,120 @@
+name: APK Predication Gael Plein Ecran
+on:
+  push:
+    branches:
+      - predication-gael-fullscreen-2026
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compiler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Creer application Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p discours-build/app/src/main/java/fr/pointeor/discours
+          mkdir -p discours-build/app/src/main/res/drawable
+          mkdir -p discours-build/app/src/main/res/values
+          cat > discours-build/settings.gradle <<'EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+          rootProject.name = 'ProgrammeDiscours'
+          include ':app'
+          EOF
+          cat > discours-build/build.gradle <<'EOF'
+          plugins { id 'com.android.application' version '8.6.1' apply false }
+          EOF
+          cat > discours-build/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          EOF
+          cat > discours-build/app/build.gradle <<'EOF'
+          plugins { id 'com.android.application' }
+          android { namespace 'fr.pointeor.discours'; compileSdk 35
+          defaultConfig { applicationId 'fr.pointeor.predication.gael'; minSdk 24; targetSdk 34; versionCode 1; versionName '1.0' }
+          compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+          }
+          EOF
+          cat > discours-build/app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET"/><application android:allowBackup="false" android:usesCleartextTraffic="false" android:icon="@drawable/app_icon" android:label="Prédication Gaël" android:theme="@android:style/Theme.Material.Light.NoActionBar"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>
+          EOF
+          printf '%s' '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' | base64 -d > discours-build/app/src/main/res/drawable/app_icon.png
+          cat > discours-build/app/src/main/java/fr/pointeor/discours/MainActivity.java <<'EOF'
+          package fr.pointeor.discours;
+          import android.app.*;
+          import android.os.*;
+          import android.content.*;
+          import android.graphics.Color;
+          import android.net.Uri;
+          import android.view.*;
+          import android.webkit.*;
+          import android.widget.*;
+          public class MainActivity extends Activity {
+           static final String URL="https://script.google.com/macros/s/AKfycbyqBcsC0gipoTL5ljcHnLdGWnwNfywY1E8g9zqkI78_s7lNmRu1HAF0ixU3eypVjsjb6Q/exec";
+           WebView web; FrameLayout root; View splash;
+           int dp(int v){return (int)(getResources().getDisplayMetrics().density*v);}
+           @SuppressWarnings("deprecation") void immersive(){
+            int flags=View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY|View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+            getWindow().getDecorView().setSystemUiVisibility(flags);
+            if(Build.VERSION.SDK_INT>=30){android.view.WindowInsetsController c=getWindow().getInsetsController();if(c!=null){c.hide(android.view.WindowInsets.Type.statusBars()|android.view.WindowInsets.Type.navigationBars());c.setSystemBarsBehavior(android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);}}
+           }
+           @Override public void onCreate(Bundle b){super.onCreate(b);getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);immersive();
+            root=new FrameLayout(this);web=new WebView(this);root.addView(web,new FrameLayout.LayoutParams(-1,-1));setContentView(root);
+            LinearLayout loading=new LinearLayout(this);loading.setGravity(Gravity.CENTER);loading.setOrientation(1);loading.setBackgroundColor(0xff10385e);
+            ImageView img=new ImageView(this);img.setImageResource(R.drawable.app_icon);loading.addView(img,new LinearLayout.LayoutParams(dp(130),dp(130)));
+            TextView txt=new TextView(this);txt.setText("Prédication Gaël");txt.setTextColor(-1);txt.setTextSize(19);txt.setGravity(Gravity.CENTER);loading.addView(txt,new LinearLayout.LayoutParams(-1,dp(65)));
+            ProgressBar bar=new ProgressBar(this);loading.addView(bar,new LinearLayout.LayoutParams(dp(45),dp(45)));splash=loading;root.addView(splash,new FrameLayout.LayoutParams(-1,-1));
+            WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setUseWideViewPort(true);s.setLoadWithOverviewMode(true);s.setAllowFileAccess(false);s.setAllowContentAccess(false);s.setJavaScriptCanOpenWindowsAutomatically(true);s.setSupportMultipleWindows(true);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+            CookieManager.getInstance().setAcceptCookie(true);CookieManager.getInstance().setAcceptThirdPartyCookies(web,true);
+            web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView w,WebResourceRequest r){return route(r.getUrl());}
+            @Override public void onPageFinished(WebView w,String u){if(splash!=null){root.removeView(splash);splash=null;}immersive();}
+            @Override public void onReceivedError(WebView w,WebResourceRequest req,WebResourceError e){if(req.isForMainFrame()){if(splash!=null){root.removeView(splash);splash=null;}new AlertDialog.Builder(MainActivity.this).setTitle("Connexion indisponible").setMessage("Vérifie ta connexion Internet.").setPositiveButton("Réessayer",(d,i)->web.loadUrl(URL)).setNegativeButton("Fermer",(d,i)->finish()).show();}}});
+            web.setWebChromeClient(new WebChromeClient(){@Override public boolean onCreateWindow(WebView source,boolean dialog,boolean gesture,Message msg){
+            WebView child=new WebView(MainActivity.this);child.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){if(!route(r.getUrl()))web.loadUrl(r.getUrl().toString());v.destroy();return true;}});
+            WebView.WebViewTransport t=(WebView.WebViewTransport)msg.obj;t.setWebView(child);msg.sendToTarget();return true;}});
+            web.loadUrl(URL);
+           }
+           boolean route(Uri u){String scheme=u.getScheme()==null?"":u.getScheme().toLowerCase();String h=u.getHost()==null?"":u.getHost().toLowerCase();
+            if("https".equals(scheme)||"http".equals(scheme)){if(h.equals("wa.me")||h.equals("api.whatsapp.com")||h.equals("web.whatsapp.com"))return external(u);return false;}
+            if("intent".equals(scheme)){try{startActivity(Intent.parseUri(u.toString(),Intent.URI_INTENT_SCHEME));}catch(Exception ignored){}return true;}
+            if(scheme.equals("tel")||scheme.equals("mailto")||scheme.equals("sms")||scheme.equals("whatsapp"))return external(u);return true;
+           }
+           boolean external(Uri u){try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception e){new AlertDialog.Builder(this).setMessage("Aucune application disponible pour ouvrir ce lien.").setPositiveButton("OK",null).show();}return true;}
+           @Override public void onWindowFocusChanged(boolean x){super.onWindowFocusChanged(x);if(x)immersive();}
+           @Override public void onBackPressed(){if(web!=null&&web.canGoBack())web.goBack();else new AlertDialog.Builder(this).setMessage("Fermer Prédication Gaël ?").setNegativeButton("Annuler",null).setPositiveButton("Fermer",(d,i)->finish()).show();}
+           @Override protected void onDestroy(){if(web!=null){web.stopLoading();web.destroy();web=null;}super.onDestroy();}
+          }
+          EOF
+      - name: Installer SDK Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          SDKMGR="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMGR" ]; then SDKMGR="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager -print -quit)"; fi
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          set +o pipefail
+          yes | "$SDKMGR" --sdk_root="$SDK_ROOT" --licenses > /dev/null
+          set -o pipefail
+          "$SDKMGR" --sdk_root="$SDK_ROOT" --install 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Compiler APK
+        run: cd discours-build && gradle --no-daemon --stacktrace :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Predication-Gael-PleinEcran-APK
+          path: discours-build/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
