@@ -1,0 +1,129 @@
+name: KVG Lab Master V2 - APK plein ecran sans barre web
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lab-master-v2/**'
+      - '.github/workflows/kvg-master-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperer le projet
+        uses: actions/checkout@v4
+      - name: Installer Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Preparer Python
+        run: python3 -m pip install --user pillow
+      - name: Generer une base Android KVG
+        run: python3 lab-master/build-lab-master.py
+      - name: Adapter WebView, URL Master, nom et logo
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          from io import BytesIO
+          import base64, shutil, re
+          root=Path.cwd()
+          app=root/'app'
+          dest=app/'src/main/java/com/laboratoirekvg/labmasterv2'
+          dest.mkdir(parents=True,exist_ok=True)
+          src=(root/'MainActivity.java').read_text(encoding='utf8')
+          old_url='https://script.google.com/macros/s/AKfycbyACsMvk1luR3c7ClDbIA-8Q1GmiF1VnYP3hLs9WigTzJbb6rk-SPeZRtHK7xHStekJGg/exec'
+          master_url='https://script.google.com/macros/s/AKfycbynColEQFqKIbSAWEBUJr1AkPrRA0F42H7QllfzibbMcGuWLgg7DIomKny0pZBCfyEG/exec'
+          assert old_url in src, 'Adresse source attendue absente'
+          src=src.replace('package com.laboratoirekvg.larentree;', 'package com.laboratoirekvg.labmasterv2;')
+          src=src.replace(old_url,master_url)
+          assert master_url in src and old_url not in src
+          (dest/'MainActivity.java').write_text(src,encoding='utf8')
+          stale=app/'src/main/java/com/laboratoirekvg/labmaster/MainActivity.java'
+          if stale.exists():stale.unlink()
+          layout=(root/'activity_main.xml').read_text(encoding='utf8')
+          layout=layout.replace('android:background="#FFFFFF"','android:background="#0A0B0D"')
+          layout=layout.replace('android:background="@color/purple"','android:background="#14110D"')
+          layout=layout.replace('android:textColor="#FFFFFF"','android:textColor="#F5D98A"')
+          layout=layout.replace('android:text="@string/toolbar_title"','android:text="KVG Lab Master"')
+          layout=layout.replace('android:text="⋮"','android:text="↗"')
+          (app/'src/main/res/layout/activity_main.xml').write_text(layout,encoding='utf8')
+          strings='''<resources>
+            <string name="app_name">KVG Lab Master</string>
+            <string name="toolbar_title">KVG Lab Master</string>
+            <string name="refresh">Actualiser</string>
+            <string name="menu">Options et ouvrir Chrome</string>
+            <string name="site_unavailable">Connexion au Centre KVG indisponible</string>
+            <string name="site_unavailable_hint">Vérifie Internet et le déploiement Apps Script. Une connexion Google peut nécessiter Chrome.</string>
+            <string name="retry">Réessayer</string>
+            <string name="open_browser">Ouvrir dans Chrome</string>
+          </resources>'''
+          (app/'src/main/res/values/strings.xml').write_text(strings,encoding='utf8')
+          gradle=(app/'build.gradle').read_text(encoding='utf8')
+          gradle=gradle.replace('com.laboratoirekvg.labmaster','com.laboratoirekvg.labmasterv2')
+          gradle=re.sub(r'versionCode\s+\d+','versionCode 2',gradle)
+          gradle=re.sub(r"versionName\s+'[^']+'","versionName '2.0.0'",gradle)
+          gradle=gradle.replace('targetSdk 35','targetSdk 34')
+          (app/'build.gradle').write_text(gradle,encoding='utf8')
+          raw=base64.b64decode((root/'lab-master-v2/logo.webp.b64').read_text(encoding='ascii'))
+          im=Image.open(BytesIO(raw)).convert('RGB')
+          assert im.width==im.height, 'Logo non carre'
+          res=app/'src/main/res'
+          sizes={'mdpi':48,'hdpi':72,'xhdpi':96,'xxhdpi':144,'xxxhdpi':192}
+          for density,size in sizes.items():
+            dr=res/('mipmap-'+density)
+            dr.mkdir(parents=True,exist_ok=True)
+            icon=im.resize((size,size),Image.Resampling.LANCZOS)
+            for name in ('ic_launcher.png','ic_launcher_round.png'):icon.save(dr/name,optimize=True)
+          fg=Image.new('RGBA',(432,432),(250,248,241,255))
+          fg.paste(im.resize((330,330),Image.Resampling.LANCZOS),(51,51))
+          fg.save(res/'drawable-nodpi/ic_launcher_foreground.png',optimize=True)
+          (res/'values/colors.xml').write_text('''<resources>
+            <color name="purple">#14110D</color>
+            <color name="pale_lavender">#16181D</color>
+            <color name="launcher_background">#FAF8F1</color>
+          </resources>''',encoding='utf8')
+          mf=(app/'src/main/AndroidManifest.xml').read_text(encoding='utf8')
+          assert 'Theme.LabMaster' in mf
+          (app/'src/main/AndroidManifest.xml').write_text(mf,encoding='utf8')
+          print('KVG Lab Master V2: URL master corrigee, WebView native, nouvelle icone. Aucun Chrome Custom Tab.')
+          PY
+      - name: Installer Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Preparer Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -name sdkmanager -type f -print -quit 2>/dev/null || true)"
+          fi
+          test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
+          set +o pipefail
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null
+          CODE=${PIPESTATUS[1]}
+          set -o pipefail
+          test "$CODE" -eq 0
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Compiler APK KVG Master V2
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+      - name: Preparer telechargement
+        run: |
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk dist/KVG-Lab-Master-V2.apk
+      - name: Publier APK installable
+        uses: actions/upload-artifact@v4
+        with:
+          name: KVG-Lab-Master-V2-APK
+          path: dist/KVG-Lab-Master-V2.apk
+          if-no-files-found: error
+          retention-days: 30
