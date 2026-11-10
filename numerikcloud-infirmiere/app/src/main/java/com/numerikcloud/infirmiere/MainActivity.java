@@ -78,7 +78,8 @@ public class MainActivity extends Activity {
         s.setAllowFileAccessFromFileURLs(false);
         s.setAllowUniversalAccessFromFileURLs(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // Nouveaux deploiements Apps Script: eviter de reutiliser une ancienne page de connexion mise en cache.
+        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
         s.setUseWideViewPort(true);
         s.setLoadWithOverviewMode(true);
         s.setBuiltInZoomControls(false);
@@ -148,6 +149,13 @@ public class MainActivity extends Activity {
                 }
             }
         });
+        // Purge du cache HTTP lors de l'installation de cette version, une fois seulement.
+        // Ne supprime ni cookies, ni mots de passe, ni stockage local/Google Drive.
+        android.content.SharedPreferences prefs = getSharedPreferences("numerik_inf_ui", MODE_PRIVATE);
+        if (!prefs.getBoolean("web_http_cache_v4_cleaned", false)) {
+            web.clearCache(true);
+            prefs.edit().putBoolean("web_http_cache_v4_cleaned", true).apply();
+        }
         if (savedState != null) web.restoreState(savedState);
     }
 
@@ -294,7 +302,29 @@ public class MainActivity extends Activity {
             web.reload();
             Toast.makeText(this,"Actualisation Numerik’Cloud INF",Toast.LENGTH_SHORT).show();
         });
+        refreshIcon.setOnLongClickListener(v -> {
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("Connexion Numerik’Cloud INF")
+                .setMessage("Si votre code fonctionne sur le site mais pas ici, ouvrez le site dans le navigateur. Les dossiers et les mots de passe ne sont pas modifiés.")
+                .setPositiveButton("Ouvrir le site", (dialog, which) -> openSiteInBrowser())
+                .setNeutralButton("Actualiser", (dialog, which) -> {
+                    web.clearCache(true);
+                    web.loadUrl(START_URL);
+                })
+                .setNegativeButton("Annuler", null)
+                .show();
+            return true;
+        });
         refreshIcon.setVisibility(View.GONE);
+    }
+    private void openSiteInBrowser() {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(START_URL));
+            intent.addCategory(Intent.CATEGORY_BROWSABLE);
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Navigateur indisponible sur cet appareil", Toast.LENGTH_LONG).show();
+        }
     }
     private void buildError() {
         errorPanel = new LinearLayout(this);
