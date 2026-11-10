@@ -37,10 +37,12 @@ jobs:
               (d/f'intro_{i}.webp').write_bytes(data)
           image=Image.open(d/'intro_0.webp').convert('RGB')
           w,h=image.size
-          icon=image.crop((int(.125*w),int(.18*h),int(.875*w),int(.18*h)+int(.75*w)))
-          icon=icon.resize((512,512),Image.Resampling.LANCZOS)
+          roi=image.crop((0,int(h*.174),w,int(h*.58)))
+          roi.thumbnail((494,390),Image.Resampling.LANCZOS)
+          icon=Image.new('RGB',(512,512),'#050505')
+          icon.paste(roi,((512-roi.width)//2,(512-roi.height)//2))
           drawer=ImageDraw.Draw(icon)
-          drawer.rounded_rectangle((3,3,509,509),radius=68,outline='#BA9650',width=4)
+          drawer.rounded_rectangle((3,3,509,509),radius=65,outline='#BA9650',width=4)
           for density,size in [('mdpi',48),('hdpi',72),('xhdpi',96),('xxhdpi',144),('xxxhdpi',192)]:
               dst=res/f'mipmap-{density}'
               dst.mkdir(parents=True,exist_ok=True)
