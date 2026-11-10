@@ -285,9 +285,9 @@ public class MainActivity extends Activity {
         bg.setCornerRadius(dp(100));
         bg.setStroke(dp(2),0xFFF7FFFF);
         refreshIcon.setBackground(bg);
-        FrameLayout.LayoutParams params=new FrameLayout.LayoutParams(dp(42),dp(42),Gravity.TOP|Gravity.RIGHT);
+        FrameLayout.LayoutParams params=new FrameLayout.LayoutParams(dp(42),dp(42),Gravity.TOP|Gravity.LEFT);
         params.topMargin=dp(13);
-        params.rightMargin=dp(13);
+        params.leftMargin=dp(13);
         root.addView(refreshIcon,params);
         refreshIcon.setOnClickListener(v->{
             if(intro!=null)return;
