@@ -27,6 +27,12 @@ jobs:
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" --install 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Restaurer le logo original NumerikCloud
+        shell: bash
+        run: |
+          set -e
+          mkdir -p numerikcloud-infirmiere/app/src/main/res/drawable
+          base64 --decode numerikcloud-infirmiere/assets/logo.b64 > numerikcloud-infirmiere/app/src/main/res/drawable/logo_numerikcloud.jpg
       - name: Construire la version originale V2 + visuels V4
         working-directory: numerikcloud-infirmiere
         run: gradle --no-daemon --stacktrace :app:assembleDebug
