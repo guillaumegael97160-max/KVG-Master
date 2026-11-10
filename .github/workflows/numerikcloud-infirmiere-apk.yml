@@ -1,0 +1,45 @@
+name: NumerikCloud INF - APK
+on:
+  push:
+    branches: [numericloud-infirmiere-android]
+    paths:
+      - 'numerikcloud-infirmiere/**'
+      - '.github/workflows/numerikcloud-infirmiere-apk.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Preparer les deux images du logo
+        shell: bash
+        run: |
+          set -e
+          cd numerikcloud-infirmiere
+          mkdir -p app/src/main/res/drawable
+          base64 --decode assets/logo.b64 > app/src/main/res/drawable/logo_numerikcloud.jpg
+          base64 --decode assets/icon.b64 > app/src/main/res/drawable/ic_launcher.webp
+      - name: Android SDK 35
+        shell: bash
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Compiler APK
+        working-directory: numerikcloud-infirmiere
+        run: gradle --no-daemon --stacktrace assembleDebug
+      - name: Publier APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NumerikCloud-INF-Infirmiere-APK
+          path: numerikcloud-infirmiere/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+          if-no-files-found: error
