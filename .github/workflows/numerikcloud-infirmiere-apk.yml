@@ -27,7 +27,7 @@ jobs:
           cd numerikcloud-infirmiere
           mkdir -p app/src/main/res/drawable
           base64 --decode assets/logo.b64 > app/src/main/res/drawable/logo_numerikcloud.jpg
-          cp app/src/main/res/drawable/logo_numerikcloud.jpg app/src/main/res/drawable/ic_launcher.jpg
+          base64 --decode assets/icon.b64 > app/src/main/res/drawable/ic_launcher.webp
       - name: Android SDK 35
         shell: bash
         run: |
