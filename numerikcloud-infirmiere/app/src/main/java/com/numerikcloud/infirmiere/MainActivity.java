@@ -1,4 +1,4 @@
-package com.numerikcloud.infirmiere;
+package com.numerikcloud.master;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -34,10 +34,11 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.graphics.drawable.GradientDrawable;
 
 public class MainActivity extends Activity {
-    // Adresse exacte de NumerikCloud Infirmière (distincte de KVG et Master).
-    private static final String START_URL = "https://script.google.com/macros/s/AKfycbzOBx77cV58KWbfK_O62SltpLSvRYGEw3sakHkRM69iS9ImRuiKU4zP0vo2JpiWzzn9pA/exec";
+    // Numerik'Cloud MASTER exclusivement; ne pas employer l'URL Infirmière ou KVG.
+    private static final String START_URL = "https://script.google.com/macros/s/AKfycbxFC1GhpRoJC7RqkYOB13aFLzq2Pe8FVJCUMt6hPKiggyslYa-h033BOf4Q0byAfIHgHQ/exec";
     private static final int SELECT_FILE = 301;
     private WebView web;
     private FrameLayout root;
@@ -49,7 +50,8 @@ public class MainActivity extends Activity {
     private boolean mainPageError = false;
     private FrameLayout intro;
     private int introIndex = 0;
-    private final int[] introImages = {R.drawable.intro_1, R.drawable.intro_2, R.drawable.intro_3, R.drawable.intro_4};
+    private final String[] introTitles={"Vos archives dans votre cloud","Une armoire numérique dans votre téléphone","Retrouvez vos documents partout","Gestion centralisée et sécurisée"};
+    private final String[] introDetails={"Votre espace Master, accessible où vous soyez.","Fini les classeurs encombrants : tout reste organisé.","Voyage, urgence, déplacement : vos fichiers vous accompagnent.","Pilotez les dossiers et vos espaces Numerik’Cloud."};
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override public void onCreate(Bundle savedState) {
@@ -65,6 +67,7 @@ public class MainActivity extends Activity {
         buildError();
         setContentView(root);
         showIntro();
+        buildRefreshButton();
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -182,83 +185,98 @@ public class MainActivity extends Activity {
     }
     private void showIntro() {
         intro = new FrameLayout(this);
-        intro.setBackgroundColor(Color.rgb(245,247,251));
         root.addView(intro, new FrameLayout.LayoutParams(-1,-1));
         renderIntro();
     }
     private void renderIntro() {
         intro.removeAllViews();
-        ImageView image = new ImageView(this);
-        image.setImageResource(introImages[introIndex]);
-        image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        intro.addView(image, new FrameLayout.LayoutParams(-1,-1));
-        image.setOnTouchListener(new View.OnTouchListener() {
-            private float startX, startY;
-            @Override public boolean onTouch(View v, android.view.MotionEvent e) {
-                if (e.getAction() == android.view.MotionEvent.ACTION_DOWN) { startX=e.getX(); startY=e.getY(); return true; }
-                if (e.getAction() == android.view.MotionEvent.ACTION_UP) {
-                    float dx=e.getX()-startX;
-                    if (Math.abs(dx)>dp(55) && Math.abs(dx)>Math.abs(e.getY()-startY)) {
-                        if(dx<0)nextIntro(); else if(introIndex>0){introIndex--;renderIntro();}
-                    } else if(e.getY()<v.getHeight()*0.75f) nextIntro();
-                    return true;
-                }
-                return true;
-            }
-        });
-        Button next = new Button(this);
-        next.setText(introIndex == introImages.length - 1 ? "COMMENCER" : "SUIVANT  ›");
-        next.setTextColor(Color.WHITE);
-        next.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(15,110,180)));
-        FrameLayout.LayoutParams np = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        np.bottomMargin = dp(22);
-        intro.addView(next, np);
-        next.setOnClickListener(v -> nextIntro());
-        if (introIndex > 0) {
-            Button back = new Button(this);
-            back.setText("‹");
-            FrameLayout.LayoutParams bp = new FrameLayout.LayoutParams(dp(56), dp(52), Gravity.BOTTOM | Gravity.LEFT);
-            bp.bottomMargin = dp(22); bp.leftMargin = dp(12);
-            intro.addView(back, bp);
-            back.setOnClickListener(v -> { introIndex--; renderIntro(); });
-        }
-        if (introIndex < introImages.length - 1) {
-            TextView skip = new TextView(this);
-            skip.setText("Passer"); skip.setTextSize(16); skip.setTextColor(Color.rgb(20,85,150));
-            skip.setPadding(dp(14),dp(14),dp(14),dp(14));
-            FrameLayout.LayoutParams sp = new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.RIGHT);
-            sp.topMargin=dp(16); sp.rightMargin=dp(8);
-            intro.addView(skip,sp);
-            skip.setOnClickListener(v -> finishIntro());
-        }
+        GradientDrawable background = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+            new int[]{0xFF06152E,0xFF0964A4,0xFF102849});
+        intro.setBackground(background);
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(24),dp(38),dp(24),dp(42));
+        content.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-1,-1);
+        intro.addView(content,cp);
+
+        TextView cloud = makeText("☁", 80, 0xFFFFD878, false);
+        content.addView(cloud,new LinearLayout.LayoutParams(-1,dp(104)));
+        TextView name = makeText("Numerik’Cloud", 37, Color.WHITE,true);
+        content.addView(name,new LinearLayout.LayoutParams(-1,dp(59)));
+
+        TextView master = makeText("M A S T E R",28,0xFFFFD870,true);
+        GradientDrawable pill = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[]{0xFF071D44,0xFF0C3B7E});
+        pill.setCornerRadius(dp(25)); pill.setStroke(dp(2),0xFFECC06C);
+        master.setBackground(pill);
+        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(-1,dp(62));
+        mp.topMargin=dp(6); mp.bottomMargin=dp(20); mp.leftMargin=dp(30);mp.rightMargin=dp(30);
+        content.addView(master,mp);
+
+        TextView icon = makeText(new String[]{"☁  ↑","▣  ☁","✦  ☁","▤  ✓"}[introIndex],62,0xFFFFD270,false);
+        LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(-1,dp(124));
+        ip.topMargin=dp(10); content.addView(icon,ip);
+
+        TextView title = makeText(introTitles[introIndex],24,Color.WHITE,true);
+        LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(-1,dp(88));
+        content.addView(title,tp);
+        TextView info=makeText(introDetails[introIndex],15,0xFFE0E8F8,false);
+        LinearLayout.LayoutParams dpInfo=new LinearLayout.LayoutParams(-1,dp(70));
+        dpInfo.bottomMargin=dp(10);
+        content.addView(info,dpInfo);
+
+        Button next=new Button(this);
+        next.setText(introIndex == introTitles.length-1?"OUVRIR MON ESPACE MASTER":"SUIVANT  ›");
+        next.setTextColor(0xFF071F3D);
+        next.setAllCaps(false);
+        next.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFFD168));
+        LinearLayout.LayoutParams np=new LinearLayout.LayoutParams(-1,dp(55));
+        np.topMargin=dp(17);
+        content.addView(next,np);
+        next.setOnClickListener(v->nextIntro());
+
+        TextView skip=makeText("Accéder directement au site",13,0xFFEBEFF8,false);
+        LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(50));
+        content.addView(skip,sp);
+        skip.setOnClickListener(v->finishIntro());
     }
-    private void nextIntro() { if (++introIndex >= introImages.length) finishIntro(); else renderIntro(); }
+    private void nextIntro() { if (++introIndex >= introTitles.length) finishIntro(); else renderIntro(); }
     private void finishIntro() {
         if (intro != null) { root.removeView(intro); intro = null; }
         web.loadUrl(START_URL);
     }
     private void buildLoading() {
-        loading = new LinearLayout(this);
+        loading=new LinearLayout(this);
         loading.setOrientation(LinearLayout.VERTICAL);
-        loading.setBackgroundColor(Color.rgb(249, 249, 247));
         loading.setGravity(Gravity.CENTER);
-        ImageView image = new ImageView(this);
-        image.setImageResource(com.numerikcloud.infirmiere.R.drawable.logo_numerikcloud);
-        image.setAdjustViewBounds(true);
-        image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        loading.addView(image, new LinearLayout.LayoutParams(dp(290), dp(315)));
-        TextView label = makeText("INFIRMIÈRE", 22, Color.rgb(32, 42, 60), true);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(44));
-        lp.topMargin = dp(8);
-        loading.addView(label, lp);
-        TextView subtitle = makeText("Vos archives dans votre cloud", 13, Color.rgb(105, 110, 121), false);
-        loading.addView(subtitle, new LinearLayout.LayoutParams(-1, dp(35)));
-        loadingProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        loading.setPadding(dp(25),dp(20),dp(25),dp(20));
+        loading.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xFF081A36,0xFF0C5B98}));
+        loading.addView(makeText("☁",92,0xFFFFD376,false),new LinearLayout.LayoutParams(-1,dp(135)));
+        loading.addView(makeText("Numerik’Cloud",35,Color.WHITE,true),new LinearLayout.LayoutParams(-1,dp(67)));
+        loading.addView(makeText("MASTER",29,0xFFFFD376,true),new LinearLayout.LayoutParams(-1,dp(55)));
+        loading.addView(makeText("VOS ARCHIVES DANS VOTRE CLOUD",13,0xFFECF0F8,true),new LinearLayout.LayoutParams(-1,dp(60)));
+        loadingProgress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
         loadingProgress.setMax(100);
-        LinearLayout.LayoutParams bar = new LinearLayout.LayoutParams(dp(210), dp(5));
-        bar.topMargin = dp(22);
-        loading.addView(loadingProgress, bar);
-        root.addView(loading, new FrameLayout.LayoutParams(-1,-1));
+        loadingProgress.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFFFFD376));
+        LinearLayout.LayoutParams progress=new LinearLayout.LayoutParams(dp(210),dp(6));
+        progress.gravity=Gravity.CENTER_HORIZONTAL;
+        progress.topMargin=dp(19);
+        loading.addView(loadingProgress,progress);
+        root.addView(loading,new FrameLayout.LayoutParams(-1,-1));
+    }
+    private void buildRefreshButton(){
+        TextView refresh=makeText("↻",28,Color.WHITE,true);
+        refresh.setContentDescription("Actualiser Numerik’Cloud Master");
+        GradientDrawable bg=new GradientDrawable();
+        bg.setColor(0xED093064);
+        bg.setCornerRadius(dp(100));
+        bg.setStroke(dp(2),0xFFFFD16A);
+        refresh.setBackground(bg);
+        FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(dp(43),dp(43),Gravity.TOP|Gravity.RIGHT);
+        p.topMargin=dp(13);p.rightMargin=dp(13);
+        root.addView(refresh,p);
+        refresh.setOnClickListener(v->{web.reload();Toast.makeText(this,"Actualisation Numerik’Cloud Master",Toast.LENGTH_SHORT).show();});
     }
     private void buildError() {
         errorPanel = new LinearLayout(this);
