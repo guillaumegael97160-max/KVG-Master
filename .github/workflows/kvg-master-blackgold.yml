@@ -1,0 +1,65 @@
+name: Compiler KVG MASTER Black Gold APK
+on:
+  push:
+    branches: [kvg-master-blackgold-20261110]
+    paths:
+      - 'blackgold-master/**'
+      - '.github/workflows/kvg-master-blackgold.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Assets du diaporama et du logo
+        run: |
+          python3 -m pip install pillow
+          python3 - <<'PY_INNER'
+          import base64
+          from pathlib import Path
+          from PIL import Image, ImageDraw
+          base=Path('blackgold-master')
+          res=base/'app/src/main/res'
+          d=res/'drawable-nodpi'
+          d.mkdir(parents=True,exist_ok=True)
+          for i in range(6):
+              src=base/f'assets/intro_{i}.webp.b64'
+              data=base64.b64decode(src.read_text())
+              (d/f'intro_{i}.webp').write_bytes(data)
+          image=Image.open(d/'intro_0.webp').convert('RGB')
+          w,h=image.size
+          icon=image.crop((int(.125*w),int(.18*h),int(.875*w),int(.18*h)+int(.75*w)))
+          icon=icon.resize((512,512),Image.Resampling.LANCZOS)
+          drawer=ImageDraw.Draw(icon)
+          drawer.rounded_rectangle((3,3,509,509),radius=68,outline='#BA9650',width=4)
+          for density,size in [('mdpi',48),('hdpi',72),('xhdpi',96),('xxhdpi',144),('xxxhdpi',192)]:
+              dst=res/f'mipmap-{density}'
+              dst.mkdir(parents=True,exist_ok=True)
+              icon.resize((size,size),Image.Resampling.LANCZOS).save(dst/'ic_launcher.png')
+          print('Six images et cinq tailles du logo prepares')
+          PY_INNER
+      - name: Installer Android SDK 35
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER=$(find "$ANDROID_HOME" -name sdkmanager -type f | head -1); fi
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" --install 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Compiler l'APK KVG MASTER
+        run: gradle --no-daemon --stacktrace --project-dir blackgold-master :app:assembleDebug
+      - name: Publier l'APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Laboratoire-KVG-MASTER-BlackGold-APK
+          path: blackgold-master/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
