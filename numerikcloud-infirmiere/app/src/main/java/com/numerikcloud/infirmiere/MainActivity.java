@@ -36,7 +36,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    // Adresse exacte de NumerikCloud Infirmière (distincte de KVG et Master).
+    // Numerik’Cloud INF uniquement : ne pas utiliser l’URL Master ni KVG.
     private static final String START_URL = "https://script.google.com/macros/s/AKfycbzOBx77cV58KWbfK_O62SltpLSvRYGEw3sakHkRM69iS9ImRuiKU4zP0vo2JpiWzzn9pA/exec";
     private static final int SELECT_FILE = 301;
     private WebView web;
@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
     private long backMillis = 0;
     private boolean mainPageError = false;
     private FrameLayout intro;
+    private TextView refreshIcon;
     private int introIndex = 0;
     private final int[] introImages = {R.drawable.intro_1, R.drawable.intro_2, R.drawable.intro_3, R.drawable.intro_4};
 
@@ -63,6 +64,7 @@ public class MainActivity extends Activity {
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
         buildLoading();
         buildError();
+        buildRefreshControl();
         setContentView(root);
         showIntro();
         WebSettings s = web.getSettings();
@@ -181,6 +183,7 @@ public class MainActivity extends Activity {
         return t;
     }
     private void showIntro() {
+        if (refreshIcon != null) refreshIcon.setVisibility(View.GONE);
         intro = new FrameLayout(this);
         intro.setBackgroundColor(Color.rgb(245,247,251));
         root.addView(intro, new FrameLayout.LayoutParams(-1,-1));
@@ -235,30 +238,63 @@ public class MainActivity extends Activity {
     private void nextIntro() { if (++introIndex >= introImages.length) finishIntro(); else renderIntro(); }
     private void finishIntro() {
         if (intro != null) { root.removeView(intro); intro = null; }
+        if (refreshIcon != null) refreshIcon.setVisibility(View.VISIBLE);
         web.loadUrl(START_URL);
     }
     private void buildLoading() {
         loading = new LinearLayout(this);
+        loading.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
         loading.setOrientation(LinearLayout.VERTICAL);
-        loading.setBackgroundColor(Color.rgb(249, 249, 247));
-        loading.setGravity(Gravity.CENTER);
-        ImageView image = new ImageView(this);
-        image.setImageResource(com.numerikcloud.infirmiere.R.drawable.logo_numerikcloud);
-        image.setAdjustViewBounds(true);
-        image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        loading.addView(image, new LinearLayout.LayoutParams(dp(290), dp(315)));
-        TextView label = makeText("INFIRMIÈRE", 22, Color.rgb(32, 42, 60), true);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(44));
-        lp.topMargin = dp(8);
-        loading.addView(label, lp);
-        TextView subtitle = makeText("Vos archives dans votre cloud", 13, Color.rgb(105, 110, 121), false);
-        loading.addView(subtitle, new LinearLayout.LayoutParams(-1, dp(35)));
+        loading.setPadding(dp(16), dp(18), dp(16), dp(31));
+        loading.setBackgroundColor(Color.rgb(247,249,252));
+        FrameLayout wrap = new FrameLayout(this);
+        ImageView poster = new ImageView(this);
+        poster.setImageResource(R.drawable.intro_1);
+        poster.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        wrap.addView(poster, new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout footer = new LinearLayout(this);
+        footer.setOrientation(LinearLayout.VERTICAL);
+        footer.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setColor(0xEDFFFFFF);
+        bg.setCornerRadius(dp(18));
+        bg.setStroke(dp(1),0xFFB5CDE0);
+        footer.setBackground(bg);
+        TextView title=makeText("Numerik’Cloud INF", 17, 0xFF07538F,true);
+        footer.addView(title,new LinearLayout.LayoutParams(-1,dp(31)));
         loadingProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         loadingProgress.setMax(100);
-        LinearLayout.LayoutParams bar = new LinearLayout.LayoutParams(dp(210), dp(5));
-        bar.topMargin = dp(22);
-        loading.addView(loadingProgress, bar);
-        root.addView(loading, new FrameLayout.LayoutParams(-1,-1));
+        loadingProgress.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFF218BCB));
+        LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(dp(190),dp(6));
+        bp.gravity=Gravity.CENTER_HORIZONTAL;
+        bp.topMargin=dp(6);
+        footer.addView(loadingProgress,bp);
+        TextView state=makeText("Chargement de votre espace infirmier…", 12, 0xFF234A6C,false);
+        footer.addView(state,new LinearLayout.LayoutParams(-1,dp(35)));
+        FrameLayout.LayoutParams fp=new FrameLayout.LayoutParams(-1,dp(112), Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
+        fp.leftMargin=dp(18);fp.rightMargin=dp(18);fp.bottomMargin=dp(14);
+        wrap.addView(footer,fp);
+        loading.addView(wrap,new LinearLayout.LayoutParams(-1,-1));
+        root.addView(loading,new FrameLayout.LayoutParams(-1,-1));
+    }
+    private void buildRefreshControl(){
+        refreshIcon=makeText("↻", 28, Color.WHITE,true);
+        refreshIcon.setContentDescription("Actualiser Numerik’Cloud INF");
+        android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
+        bg.setColor(0xF0136B9E);
+        bg.setCornerRadius(dp(100));
+        bg.setStroke(dp(2),0xFFF7FFFF);
+        refreshIcon.setBackground(bg);
+        FrameLayout.LayoutParams params=new FrameLayout.LayoutParams(dp(42),dp(42),Gravity.TOP|Gravity.RIGHT);
+        params.topMargin=dp(13);
+        params.rightMargin=dp(13);
+        root.addView(refreshIcon,params);
+        refreshIcon.setOnClickListener(v->{
+            if(intro!=null)return;
+            web.reload();
+            Toast.makeText(this,"Actualisation Numerik’Cloud INF",Toast.LENGTH_SHORT).show();
+        });
+        refreshIcon.setVisibility(View.GONE);
     }
     private void buildError() {
         errorPanel = new LinearLayout(this);

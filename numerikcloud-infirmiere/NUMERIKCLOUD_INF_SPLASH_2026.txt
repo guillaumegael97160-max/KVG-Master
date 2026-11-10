@@ -1,0 +1,3 @@
+Numerik’Cloud INF, application Android uniquement pour infirmières.
+Lien unique : https://script.google.com/macros/s/AKfycbzOBx77cV58KWbfK_O62SltpLSvRYGEw3sakHkRM69iS9ImRuiKU4zP0vo2JpiWzzn9pA/exec
+Ecrans d'introduction déjà fournis (intro_1 à intro_4), écran de chargement avec la première illustration, barre de progression, bouton rond actualiser ↻ en haut. Aucune barre Chrome ni menu 3 points.
