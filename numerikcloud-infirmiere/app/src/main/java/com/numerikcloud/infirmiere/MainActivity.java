@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
     private long backMillis = 0;
     private boolean mainPageError = false;
     private FrameLayout intro;
+    private TextView refreshControl;
     private int introIndex = 0;
     private final int[] introImages = {R.drawable.intro_1, R.drawable.intro_2, R.drawable.intro_3, R.drawable.intro_4};
 
@@ -63,6 +64,7 @@ public class MainActivity extends Activity {
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
         buildLoading();
         buildError();
+        buildRefreshControl();
         setContentView(root);
         showIntro();
         WebSettings s = web.getSettings();
@@ -235,8 +237,42 @@ public class MainActivity extends Activity {
     private void nextIntro() { if (++introIndex >= introImages.length) finishIntro(); else renderIntro(); }
     private void finishIntro() {
         if (intro != null) { root.removeView(intro); intro = null; }
-        web.loadUrl(START_URL);
+        // Actualisation toujours visible apres l'introduction, jamais pendant les diapos.
+        if (refreshControl != null) refreshControl.setVisibility(View.VISIBLE);
+        // La session WebView V2 est preservee. Ne jamais vider cookies, cache ou stockage.
+        if (web.getUrl() == null || web.getUrl().isEmpty()) web.loadUrl(START_URL);
     }
+    /**
+     * Petit cercle d'actualisation en haut a gauche.
+     * Un simple reload() conserve les cookies et l'authentification de la V2.
+     * Aucune ouverture de navigateur externe.
+     */
+    private void buildRefreshControl() {
+        refreshControl = new TextView(this);
+        refreshControl.setText("\u21bb");
+        refreshControl.setTextSize(26);
+        refreshControl.setTextColor(Color.rgb(18, 101, 174));
+        refreshControl.setGravity(Gravity.CENTER);
+        refreshControl.setContentDescription("Actualiser la page NumerikCloud");
+        refreshControl.setTypeface(null, android.graphics.Typeface.BOLD);
+        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
+        background.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        background.setColor(Color.argb(232, 255, 255, 255));
+        background.setStroke(dp(1), Color.rgb(211, 226, 240));
+        refreshControl.setBackground(background);
+        refreshControl.setElevation(dp(3));
+        FrameLayout.LayoutParams rp = new FrameLayout.LayoutParams(dp(36), dp(36), Gravity.TOP | Gravity.LEFT);
+        rp.leftMargin = dp(8);
+        rp.topMargin = dp(10);
+        root.addView(refreshControl, rp);
+        refreshControl.setVisibility(View.GONE);
+        refreshControl.setOnClickListener(v -> {
+            refreshControl.animate().rotationBy(360).setDuration(350).start();
+            if (web.getUrl() == null || web.getUrl().isEmpty()) web.loadUrl(START_URL);
+            else web.reload();
+        });
+    }
+
     private void buildLoading() {
         loading = new LinearLayout(this);
         loading.setOrientation(LinearLayout.VERTICAL);
