@@ -1,0 +1,17 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.laboratoirekvg.master'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.laboratoirekvg.master'
+        minSdk 24
+        targetSdk 34
+        versionCode 21
+        versionName '2.1.0-blackgold'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
