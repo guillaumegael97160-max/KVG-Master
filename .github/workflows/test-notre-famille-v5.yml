@@ -39,8 +39,10 @@ jobs:
             echo "======= ANDROID ERRORS ======="
             adb logcat -d -v time -s AndroidRuntime:E ActivityTaskManager:E WebViewFactory:E chromium:E | tail -n 200
             adb shell dumpsys activity activities | grep -A 7 -B 5 familleguillaume || true
-            PID=$(adb shell pidof com.familleguillaume.application | tr -d '\r')
-            echo "APP_PID=$PID"
-            test -n "$PID"
+            echo "======= VERIFY FOREGROUND ACTIVITY ======="
+            adb shell dumpsys activity activities | tee /tmp/famille-active.txt
+            grep -E 'mResumedActivity:.*com.familleguillaume.application/.MainActivity' /tmp/famille-active.txt
+            echo "======= VERIFY PROCESS RECORD ======="
+            grep -E 'ProcessRecord.*com.familleguillaume.application' /tmp/famille-active.txt
             adb logcat -d -s AndroidRuntime:E | tee /tmp/famille-android-errors.txt
             ! grep -q "FATAL EXCEPTION" /tmp/famille-android-errors.txt
