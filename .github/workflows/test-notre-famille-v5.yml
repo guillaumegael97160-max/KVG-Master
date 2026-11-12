@@ -36,6 +36,9 @@ jobs:
             adb logcat -c
             adb shell am start -W -n com.familleguillaume.application/.MainActivity
             sleep 10
+            echo "======= ANDROID ERRORS ======="
+            adb logcat -d -v time -s AndroidRuntime:E ActivityTaskManager:E WebViewFactory:E chromium:E | tail -n 200
+            adb shell dumpsys activity activities | grep -A 7 -B 5 familleguillaume || true
             PID=$(adb shell pidof com.familleguillaume.application | tr -d '\r')
             echo "APP_PID=$PID"
             test -n "$PID"
