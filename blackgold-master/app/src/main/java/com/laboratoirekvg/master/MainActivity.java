@@ -3,6 +3,15 @@ package com.laboratoirekvg.master;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.KeyguardManager;
+import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.BiometricPrompt;
+import android.os.CancellationSignal;
+import android.widget.VideoView;
+import android.graphics.BitmapFactory;
+import java.io.InputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -70,6 +79,13 @@ public class MainActivity extends Activity {
     private boolean webLoaded = false;
     private boolean pageError = false;
     private int slideIndex = 0;
+    private static final int DEVICE_CODE = 955;
+    private boolean biometricUnlocked = false;
+    private boolean authInProgress = false;
+    private boolean credentialInProgress = false;
+    private boolean introFinished = false;
+    private VideoView introVideo;
+    private CancellationSignal biometricCancel;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,7 +94,6 @@ public class MainActivity extends Activity {
                 .getString(URL_KEY, CONFIRMED_MASTER_URL);
         createScreen();
         buildWebView();
-        if (isValidMasterUrl(currentMasterUrl)) startMasterSite();
         showIntro();
     }
 
@@ -132,7 +147,7 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(2), Gravity.TOP));
 
         TextView brand = new TextView(this);
-        brand.setText("LABORATOIRE  KVG   ·   MASTER");
+        brand.setText("LABORATOIRE  KVG   ·   GESTION");
         brand.setTextColor(GOLD);
         brand.setTextSize(10);
         brand.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
@@ -200,12 +215,17 @@ public class MainActivity extends Activity {
                 Gravity.CENTER);
         loadingLayer.addView(middle, place);
         ImageView logo = new ImageView(this);
-        logo.setImageResource(R.mipmap.ic_launcher);
+        // The real child's photo is packaged after the private local APK signing step.
+        try (InputStream input = getAssets().open("chargement_fille.jpg")) {
+            logo.setImageBitmap(BitmapFactory.decodeStream(input));
+        } catch (Exception ex) {
+            logo.setImageResource(R.mipmap.ic_launcher);
+        }
         logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
         LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(dp(110), dp(110));
         logoParams.gravity = Gravity.CENTER;
         middle.addView(logo, logoParams);
-        TextView t = text("KVG  MASTER", 18, GOLD, true);
+        TextView t = text("LABORATOIRE KVG  ·  GESTION", 18, GOLD, true);
         t.setLetterSpacing(0.19f);
         LinearLayout.LayoutParams tx = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(47));
@@ -325,62 +345,122 @@ public class MainActivity extends Activity {
         pageError = false;
         webLoaded = false;
         loadingLayer.setVisibility(View.VISIBLE);
+        webView.setVisibility(View.VISIBLE);
         webView.loadUrl(currentMasterUrl);
+    }
+
+    // A native Android launch video, never injected into a remote webpage.
+    private File introFile() {
+        try {
+            File f = new File(getCacheDir(), "kvg_master_intro.mp4");
+            if (!f.exists() || f.length()<1000) {
+                try(InputStream in=getAssets().open("introduction.mp4");
+                    FileOutputStream out=new FileOutputStream(f)) {
+                    byte[] bytes=new byte[32768]; int n;
+                    while((n=in.read(bytes))!=-1)out.write(bytes,0,n);
+                }
+            }
+            return f;
+        } catch(Exception ex){ return null; }
     }
 
     private void showIntro() {
         showingIntro = true;
-        slideIndex = 0;
+        introFinished = false;
         introLayer = new FrameLayout(this);
         introLayer.setBackgroundColor(BLACK);
-        introImage = new ImageView(this);
-        introImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        introImage.setImageResource(INTRO_IMAGES[0]);
-        introLayer.addView(introImage, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        TextView skip = text("PASSER  ›", 13, GOLD, true);
-        skip.setBackground(bg(Color.argb(218, 0, 0, 0), Color.rgb(117, 86, 38), 14));
-        FrameLayout.LayoutParams skipParams = new FrameLayout.LayoutParams(
-                dp(95), dp(38), Gravity.RIGHT | Gravity.TOP);
-        skipParams.setMargins(0, dp(14), dp(15), 0);
-        introLayer.addView(skip, skipParams);
-        skip.setOnClickListener(v -> completeIntro());
-        root.addView(introLayer, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        ui.postDelayed(advanceSlides, 2300);
+        introVideo = new VideoView(this);
+        introLayer.addView(introVideo,new FrameLayout.LayoutParams(-1,-1,Gravity.CENTER));
+        TextView skip=text("PASSER ›",13,GOLD,true);
+        skip.setBackground(bg(Color.argb(218,0,0,0),GOLD,12));
+        FrameLayout.LayoutParams b=new FrameLayout.LayoutParams(dp(110),dp(42),Gravity.RIGHT|Gravity.TOP);
+        b.setMargins(0,dp(15),dp(15),0);
+        introLayer.addView(skip,b);
+        skip.setOnClickListener(v->completeIntro());
+        root.addView(introLayer,new FrameLayout.LayoutParams(-1,-1));
+        File video=introFile();
+        if(video==null){ui.postDelayed(this::completeIntro,600);return;}
+        introVideo.setOnCompletionListener(mp->completeIntro());
+        introVideo.setOnErrorListener((mp,what,extra)->{completeIntro();return true;});
+        introVideo.setVideoPath(video.getAbsolutePath());
+        introVideo.setOnPreparedListener(mp->{mp.setLooping(false);introVideo.start();});
     }
 
-    private final Runnable advanceSlides = new Runnable() {
-        @Override public void run() {
-            if (!showingIntro || introImage == null) return;
-            slideIndex++;
-            if (slideIndex >= INTRO_IMAGES.length) {
-                completeIntro();
-                return;
-            }
-            introImage.animate().alpha(0f).setDuration(220).withEndAction(() -> {
-                if (!showingIntro) return;
-                introImage.setImageResource(INTRO_IMAGES[slideIndex]);
-                introImage.animate().alpha(1f).setDuration(300).start();
-            }).start();
-            ui.postDelayed(this, 2500);
-        }
-    };
-
     private void completeIntro() {
-        if (!showingIntro) return;
-        showingIntro = false;
-        ui.removeCallbacks(advanceSlides);
-        root.removeView(introLayer);
-        introLayer = null;
-        introImage = null;
-        if (!isValidMasterUrl(currentMasterUrl)) {
-            showMasterUrlSetup();
-        } else if (pageError) {
-            showLoadError();
-        } else {
-            loadingLayer.setVisibility(webLoaded ? View.GONE : View.VISIBLE);
+        if(introFinished)return;
+        introFinished=true;
+        showingIntro=false;
+        if(introVideo!=null){introVideo.stopPlayback();introVideo=null;}
+        if(introLayer!=null){root.removeView(introLayer);introLayer=null;}
+        loadingLayer.setVisibility(View.VISIBLE);
+        showBiometricUnlock();
+    }
+
+    private void showBiometricUnlock() {
+        if(!introFinished||biometricUnlocked||authInProgress||credentialInProgress)return;
+        KeyguardManager km=(KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);
+        if(km==null||!km.isDeviceSecure()) {
+            new AlertDialog.Builder(this).setTitle("Accès sécurisé")
+              .setMessage("Activez une empreinte ou un code de verrouillage Android avant d'utiliser KVG Gestion.")
+              .setPositiveButton("OK",(d,w)->{}).show();return;
         }
+        if(Build.VERSION.SDK_INT>=30){
+            BiometricManager bm=getSystemService(BiometricManager.class);
+            if(bm!=null&&bm.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)==BiometricManager.BIOMETRIC_SUCCESS){
+                authenticateFingerprint();return;
+            }
+        } else if(Build.VERSION.SDK_INT>=28) {
+            android.hardware.fingerprint.FingerprintManager fm =
+                (android.hardware.fingerprint.FingerprintManager)getSystemService(Context.FINGERPRINT_SERVICE);
+            if(fm!=null&&fm.isHardwareDetected()&&fm.hasEnrolledFingerprints()){
+                authenticateFingerprint();return;
+            }
+        }
+        unlockWithDeviceCode();
+    }
+
+    private void authenticateFingerprint() {
+        authInProgress=true;
+        biometricCancel=new CancellationSignal();
+        BiometricPrompt prompt=new BiometricPrompt.Builder(this)
+            .setTitle("KVG Master Gestion")
+            .setSubtitle("Utilisez votre empreinte digitale")
+            .setNegativeButton("Code du téléphone",getMainExecutor(),(dialog,which)->{
+                authInProgress=false;unlockWithDeviceCode();
+            }).build();
+        prompt.authenticate(biometricCancel,getMainExecutor(),new BiometricPrompt.AuthenticationCallback(){
+            @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result){
+                authInProgress=false;unlockSuccess();
+            }
+            @Override public void onAuthenticationError(int code,CharSequence message){
+                authInProgress=false;
+                if(code!=BiometricPrompt.BIOMETRIC_ERROR_NEGATIVE_BUTTON
+                        &&code!=BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED)
+                    Toast.makeText(MainActivity.this,"Empreinte non reconnue. Réessayez ou utilisez le code du téléphone.",Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void unlockWithDeviceCode() {
+        if(credentialInProgress)return;
+        KeyguardManager km=(KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);
+        Intent intent=km==null?null:km.createConfirmDeviceCredentialIntent(
+                "KVG Master Gestion","Confirmez le code du téléphone pour ouvrir KVG Gestion.");
+        if(intent==null){Toast.makeText(this,"Sécurisez d'abord le téléphone.",Toast.LENGTH_LONG).show();return;}
+        credentialInProgress=true;
+        startActivityForResult(intent,DEVICE_CODE);
+    }
+
+    private void unlockSuccess() {
+        biometricUnlocked=true;
+        if(isValidMasterUrl(currentMasterUrl))startMasterSite();
+        else showMasterUrlSetup();
+    }
+
+    private void relock() {
+        biometricUnlocked=false;
+        if(webView!=null)webView.setVisibility(View.INVISIBLE);
+        if(loadingLayer!=null)loadingLayer.setVisibility(View.VISIBLE);
     }
 
     private void showMasterUrlSetup() {
@@ -488,6 +568,11 @@ public class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode,int resultCode,Intent data) {
         super.onActivityResult(requestCode,resultCode,data);
+        if (requestCode == DEVICE_CODE) {
+            credentialInProgress=false;
+            if(resultCode==RESULT_OK)unlockSuccess();
+            return;
+        }
         if (requestCode == PICK_FILE && pendingFiles != null) {
             Uri[] picked = WebChromeClient.FileChooserParams.parseResult(resultCode,data);
             pendingFiles.onReceiveValue(picked);
@@ -512,14 +597,18 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         enableFullScreen();
-        if (webView != null) webView.onResume();
+        if (webView != null && biometricUnlocked) webView.onResume();
+        if (introFinished && !biometricUnlocked && !authInProgress && !credentialInProgress)
+            ui.postDelayed(this::showBiometricUnlock,240);
     }
     @Override protected void onPause() {
+        if (!authInProgress && !credentialInProgress) relock();
         if (webView != null) webView.onPause();
         super.onPause();
     }
     @Override protected void onDestroy() {
-        ui.removeCallbacks(advanceSlides);
+        if (biometricCancel != null) biometricCancel.cancel();
+        if(introVideo!=null)introVideo.stopPlayback();
         if (pendingFiles != null) { pendingFiles.onReceiveValue(null); pendingFiles=null; }
         if (webView != null) {
             webView.stopLoading();
