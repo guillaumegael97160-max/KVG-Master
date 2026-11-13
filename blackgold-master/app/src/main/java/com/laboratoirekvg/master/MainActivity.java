@@ -434,8 +434,7 @@ public class MainActivity extends Activity {
             }
             @Override public void onAuthenticationError(int code,CharSequence message){
                 authInProgress=false;
-                if(code!=BiometricPrompt.BIOMETRIC_ERROR_NEGATIVE_BUTTON
-                        &&code!=BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED)
+                if(code!=BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED)
                     Toast.makeText(MainActivity.this,"Empreinte non reconnue. Réessayez ou utilisez le code du téléphone.",Toast.LENGTH_LONG).show();
             }
         });
