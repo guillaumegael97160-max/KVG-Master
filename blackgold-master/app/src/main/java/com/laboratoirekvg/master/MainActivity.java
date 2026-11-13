@@ -206,41 +206,41 @@ public class MainActivity extends Activity {
     }
 
     private void createLoadingContents() {
-        LinearLayout middle = new LinearLayout(this);
-        middle.setOrientation(LinearLayout.VERTICAL);
-        middle.setGravity(Gravity.CENTER);
-        middle.setPadding(dp(24), dp(24), dp(24), dp(24));
-        FrameLayout.LayoutParams place = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.CENTER);
-        loadingLayer.addView(middle, place);
-        ImageView logo = new ImageView(this);
-        // The real child's photo is packaged after the private local APK signing step.
+        loadingLayer.removeAllViews();
+        ImageView photo = new ImageView(this);
+        photo.setBackgroundColor(BLACK);
+        photo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        // Private photo inserted ONLY into the locally signed APK, not in GitHub.
         try (InputStream input = getAssets().open("chargement_fille.jpg")) {
-            logo.setImageBitmap(BitmapFactory.decodeStream(input));
+            photo.setImageBitmap(BitmapFactory.decodeStream(input));
         } catch (Exception ex) {
-            logo.setImageResource(R.mipmap.ic_launcher);
+            photo.setImageResource(R.mipmap.ic_launcher);
         }
-        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(dp(110), dp(110));
-        logoParams.gravity = Gravity.CENTER;
-        middle.addView(logo, logoParams);
-        TextView t = text("LABORATOIRE KVG  ·  GESTION", 18, GOLD, true);
-        t.setLetterSpacing(0.19f);
-        LinearLayout.LayoutParams tx = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(47));
-        tx.topMargin = dp(12);
-        middle.addView(t, tx);
-        TextView subtitle = text("Connexion au centre de contrôle…", 13, Color.rgb(210, 200, 175), false);
-        middle.addView(subtitle);
+        loadingLayer.addView(photo,new FrameLayout.LayoutParams(-1,-1));
+        View shade = new View(this);
+        shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0x99090909,0x11090909,0x33090909,0xEE090909}));
+        loadingLayer.addView(shade,new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout info = new LinearLayout(this);
+        info.setOrientation(LinearLayout.VERTICAL);
+        info.setPadding(dp(20),dp(14),dp(20),dp(34));
+        info.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams bottom = new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM);
+        loadingLayer.addView(info,bottom);
+        TextView title=text("LABORATOIRE KVG",24,Color.rgb(255,245,218),true);
+        title.setLetterSpacing(.13f);
+        info.addView(title,new LinearLayout.LayoutParams(-1,dp(46)));
+        TextView gestion=text("GESTION",23,GOLD,true);
+        gestion.setLetterSpacing(.28f);
+        info.addView(gestion,new LinearLayout.LayoutParams(-1,dp(40)));
+        info.addView(text("Connexion sécurisée au centre de contrôle",12,Color.rgb(228,215,182),false));
         ProgressBar spin = new ProgressBar(this);
         spin.setIndeterminate(true);
-        if (Build.VERSION.SDK_INT >= 21) spin.setIndeterminateTintList(
-                android.content.res.ColorStateList.valueOf(GOLD));
-        LinearLayout.LayoutParams spinParams = new LinearLayout.LayoutParams(dp(32),dp(32));
-        spinParams.gravity = Gravity.CENTER;
-        spinParams.topMargin = dp(30);
-        middle.addView(spin, spinParams);
+        spin.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(GOLD));
+        LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(dp(28),dp(28));
+        sp.gravity=Gravity.CENTER;sp.topMargin=dp(19);
+        info.addView(spin,sp);
+        loadingLayer.setOnClickListener(v->showBiometricUnlock());
     }
 
     @SuppressLint("SetJavaScriptEnabled")
