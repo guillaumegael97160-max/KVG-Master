@@ -1,0 +1,47 @@
+name: Compiler KVG Master V48 biometrie
+on:
+  push:
+    branches: [kvg-master-biometrie-v48-20261114]
+    paths:
+      - 'kvg-master-v48/**'
+      - '.github/workflows/kvg-master-v48-biometrie.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Installer SDK 35
+        shell: bash
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER=$(find "$ANDROID_HOME" -name sdkmanager -type f | head -1); fi
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" --install 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Compiler APK V48 release et debug
+        run: gradle --no-daemon --stacktrace --project-dir kvg-master-v48 :app:assembleRelease :app:assembleDebug
+      - name: Preparer APK a signer localement
+        shell: bash
+        run: |
+          mkdir -p kvg-release-v48
+          cp kvg-master-v48/app/build/outputs/apk/release/app-release-unsigned.apk kvg-release-v48/KVG_Master_V48_unsigned.apk
+          cp kvg-master-v48/app/build/outputs/apk/debug/app-debug.apk kvg-release-v48/KVG_Master_V48_debug.apk
+          cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" kvg-release-v48/apksigner.jar
+          cp "$ANDROID_HOME/build-tools/35.0.0/zipalign" kvg-release-v48/zipalign
+          printf '%s\n' 'APK release non signe. Utiliser la cle privee KVG existante hors de GitHub.' > kvg-release-v48/README.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KVG-Master-V48-APK-et-outils
+          path: kvg-release-v48/
+          if-no-files-found: error
+          retention-days: 7

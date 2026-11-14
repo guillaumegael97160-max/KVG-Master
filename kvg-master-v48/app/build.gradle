@@ -1,0 +1,21 @@
+plugins { id 'com.android.application' }
+
+def signingPath = System.getenv('KVG_MASTER_KEYSTORE')
+def signingStorePass = System.getenv('KVG_MASTER_STORE_PASSWORD')
+def signingAlias = System.getenv('KVG_MASTER_KEY_ALIAS')
+def signingKeyPass = System.getenv('KVG_MASTER_KEY_PASSWORD')
+def hasSigning = signingPath && signingStorePass && signingAlias && signingKeyPass
+
+android {
+    namespace 'com.laboratoirekvg.master'
+    compileSdk 35
+    defaultConfig { applicationId 'com.laboratoirekvg.master'; minSdk 28; targetSdk 34; versionCode 51; versionName '4.8-bio-login' }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    if (hasSigning) {
+        signingConfigs {
+            kvg { storeFile file(signingPath); storePassword signingStorePass;
+                  keyAlias signingAlias; keyPassword signingKeyPass }
+        }
+        buildTypes { debug { signingConfig signingConfigs.kvg }; release { signingConfig signingConfigs.kvg } }
+    }
+}
