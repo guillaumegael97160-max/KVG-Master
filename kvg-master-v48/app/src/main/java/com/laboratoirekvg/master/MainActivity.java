@@ -263,7 +263,7 @@ public final class MainActivity extends Activity {
                 }catch(Exception e){notifyFailure("Empreinte valide mais clé inutilisable. Reconnectez-vous avec le mot de passe.");}
             }
             @Override public void onAuthenticationError(int code,CharSequence msg){biometricBusy=false;
-                if(code!=BiometricPrompt.BIOMETRIC_ERROR_NEGATIVE_BUTTON && code!=BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED)
+                if(code!=BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED)
                     notifyFailure(String.valueOf(msg));
             }
             @Override public void onAuthenticationFailed(){ /* Le système permet de réessayer. */ }
