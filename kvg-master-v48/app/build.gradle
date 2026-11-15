@@ -9,7 +9,7 @@ def hasSigning = signingPath && signingStorePass && signingAlias && signingKeyPa
 android {
     namespace 'com.laboratoirekvg.master'
     compileSdk 35
-    defaultConfig { applicationId 'com.laboratoirekvg.master'; minSdk 28; targetSdk 34; versionCode 51; versionName '4.8-bio-login' }
+    defaultConfig { applicationId 'com.laboratoirekvg.master'; minSdk 28; targetSdk 34; versionCode 52; versionName '4.8.1-historique-captures' }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     if (hasSigning) {
         signingConfigs {
