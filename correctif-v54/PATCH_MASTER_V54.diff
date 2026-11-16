@@ -1,0 +1,79 @@
+--- KVG_MASTER_module_V26_avant
++++ KVG_MASTER_module_V26_V54
+@@ -1,22 +1,73 @@
+ <script id="kv26-script">
+ (function(){
+ const kv26Mode='MASTER';
+-const KV26={data:null,month:'',region:kv26Mode==='MASTER'?'GUADELOUPE':kv26Mode,store:'',date:'',loading:false,working:false,pending:null};
++const KV26={data:null,month:'',region:kv26Mode==='MASTER'?'GUADELOUPE':kv26Mode,store:'',date:'',loading:false,working:false,pending:null,stockData:null,stockLoading:false,stockError:'',stockRegion:''};
+ const el=id=>document.getElementById(id);const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const nf=x=>new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(Number(x)||0);
+ function now(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Guadeloupe',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const ob={};parts.forEach(p=>ob[p.type]=p.value);return ob.year+'-'+ob.month+'-'+ob.day;}
+ function authed(){try{if(kv26Mode==='MASTER')return typeof kvgV19SessionToken_==='function'&&Boolean(kvgV19SessionToken_());if(kv26Mode==='GUADELOUPE')return typeof state!=='undefined'&&!!state.token;if(kv26Mode==='MARTINIQUE')return typeof STATE!=='undefined'&&!!STATE.token;}catch(e){}return false;}
+ function remote(method,p){return new Promise((resolve,reject)=>{if(!window.google?.script?.run)return reject(new Error('Application Apps Script non déployée.'));try{const t=window.google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);if(kv26Mode==='MASTER'){const q=Object.assign({},p,{_kvgToken:kvgV19SessionToken_()});return method==='read'?t.kvgV26MasterLire(q):t.kvgV26MasterEnregistrer(q);}if(kv26Mode==='GUADELOUPE')return method==='read'?t.kvgV26GuaLire(state.token,p):t.kvgV26GuaEnregistrer(state.token,p);if(kv26Mode==='MARTINIQUE')return method==='read'?t.kvgV26MqLire(STATE.token,p):t.kvgV26MqEnregistrer(STATE.token,p);reject(new Error('Région non configurée.'));}catch(e){reject(e);}});}
++// V54 — simple lecture des quantités déjà connues dans Stocks magasins V27.
++// Ne calcule aucun écart, ne modifie pas les stocks et n'ajoute aucun champ de saisie.
++function kv26ReadRecordedStock(region){
++ return new Promise((resolve,reject)=>{
++  if(!window.google?.script?.run)return reject(Error('Site Apps Script indisponible'));
++  if(region==='TOUTES')return resolve({ok:true,rows:[],asOf:now()});
++  const p={month:now().slice(0,7),region:region};
++  const t=window.google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
++  try {
++   if(kv26Mode==='MASTER')t.kvgV27MasterLire(Object.assign({},p,{_kvgToken:kvgV19SessionToken_()}));
++   else if(kv26Mode==='GUADELOUPE')t.kvgV27GuaLire(state.token,p);
++   else reject(Error('Cette vue est réservée à KVG Master et Guadeloupe.'));
++  }catch(e){reject(e);}
++ });
++}
++KV26.drawStock=function(){
++ const box=el('kv26-stock-preview');if(!box)return;
++ const region=KV26.region,shop=KV26.store;
++ if(region==='TOUTES'){box.innerHTML='<strong>📦 Stock en machine enregistré</strong><p class="kv26-sub">Choisissez une région puis un magasin pour afficher les références.</p>';return;}
++ if(KV26.stockLoading||KV26.stockRegion!==region){box.innerHTML='<strong>📦 Stock en machine enregistré</strong><p class="kv26-sub">Chargement des stocks du magasin…</p>';return;}
++ if(KV26.stockError){box.innerHTML='<strong>📦 Stock en machine enregistré</strong><p class="kv26-warn">Lecture indisponible : '+esc(KV26.stockError)+'. Aucun stock supposé égal à zéro.</p>';return;}
++ const data=KV26.stockData;
++ if(!data||!shop){box.innerHTML='<strong>📦 Stock en machine enregistré</strong><p class="kv26-sub">Sélectionnez un magasin.</p>';return;}
++ const refs=KV26.data?.refs||[];
++ const stockRows=Array.isArray(data.rows)?data.rows:[];
++ const html=refs.map(ref=>{
++  const r=stockRows.find(x=>x.region===region&&x.store===shop&&x.ref===ref);
++  const known=!!(r&&r.isKnown&&Number.isFinite(Number(r.stock)));
++  const quantity=known?nf(Number(r.stock)):'—';
++  return '<div style="min-width:0;min-height:78px;border:1px solid #756849;border-radius:12px;padding:12px;background:#191d1b">'+
++   '<span style="display:block;color:#e4d9bc;font-size:12px">'+esc(ref)+'</span>'+
++   '<strong style="font-size:26px;color:#f4ce7c">'+quantity+'</strong>'+
++   '<span style="display:block;font-size:11px;color:#adb9b3">'+(known?'flacons':'Non renseigné')+'</span></div>';
++ }).join('');
++ box.innerHTML='<strong>📦 Stock en machine enregistré · '+esc(shop)+'</strong>'+
++ '<p class="kv26-sub" style="margin:6px 0 11px">État indiqué dans KVG au '+esc(data.asOf||now())+' · lecture seule</p>'+
++ '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px">'+html+'</div>'+
++ '<p class="kv26-small" style="margin-top:10px">Quantités enregistrées dans « Stocks magasins ». À comparer avec le stock physique en magasin. Aucun calcul d’écart ni report automatique.</p>';
++};
++KV26.loadStock=async function(){
++ const region=KV26.region;
++ KV26.stockLoading=true;KV26.stockData=null;KV26.stockError='';KV26.stockRegion=region;KV26.drawStock();
++ try {
++  const d=await kv26ReadRecordedStock(region);
++  if(region!==KV26.region)return;
++  if(!d?.ok)throw Error('Aucune donnée de stock retournée');
++  KV26.stockData=d;
++ }catch(e){if(region===KV26.region)KV26.stockError=String(e?.message||e);}
++ finally {if(region===KV26.region){KV26.stockLoading=false;KV26.drawStock();}}
++};
+ KV26.open=function(){if(!authed()){alert('Connecte-toi d’abord dans ton application KVG.');return;}el('kv26-screen').style.display='block';document.body.style.overflow='hidden';KV26.month=KV26.month||now().slice(0,7);KV26.date=KV26.date||now();KV26.load();};
+ KV26.close=function(){el('kv26-screen').style.display='none';document.body.style.overflow='';};
+-KV26.load=async function(){if(KV26.loading)return;KV26.loading=true;el('kv26-content').textContent='Lecture sécurisée des journaux KVG…';try{KV26.data=await remote('read',{month:KV26.month,region:KV26.region});if(!KV26.data.ok)throw new Error('Lecture non confirmée');if(KV26.region==='TOUTES'&&KV26.data.stores.length&&!KV26.store)KV26.region='GUADELOUPE';if(!KV26.store||!KV26.data.stores.some(s=>s.name===KV26.store&&s.region===KV26.region))KV26.store=(KV26.data.stores.find(s=>s.region===KV26.region)||{}).name||'';KV26.render();}catch(e){el('kv26-content').innerHTML='<div class="kv26-warn">Connexion impossible : '+esc(e.message||e)+'</div><button class="kv26-secondary" onclick="KV26.load()">Réessayer</button>';}finally{KV26.loading=false;}};
+-KV26.changeMonth=function(v){KV26.month=v;KV26.load();};KV26.changeRegion=function(v){KV26.region=v;KV26.store='';KV26.load();};KV26.changeStore=function(v){KV26.store=v;KV26.fill();};KV26.changeDate=function(v){KV26.date=v;KV26.fill();};
++KV26.load=async function(){if(KV26.loading)return;KV26.loading=true;el('kv26-content').textContent='Lecture sécurisée des journaux KVG…';try{KV26.data=await remote('read',{month:KV26.month,region:KV26.region});if(!KV26.data.ok)throw new Error('Lecture non confirmée');if(KV26.region==='TOUTES'&&KV26.data.stores.length&&!KV26.store)KV26.region='GUADELOUPE';if(!KV26.store||!KV26.data.stores.some(s=>s.name===KV26.store&&s.region===KV26.region))KV26.store=(KV26.data.stores.find(s=>s.region===KV26.region)||{}).name||'';KV26.render();KV26.loadStock();}catch(e){el('kv26-content').innerHTML='<div class="kv26-warn">Connexion impossible : '+esc(e.message||e)+'</div><button class="kv26-secondary" onclick="KV26.load()">Réessayer</button>';}finally{KV26.loading=false;}};
++KV26.changeMonth=function(v){KV26.month=v;KV26.load();};KV26.changeRegion=function(v){KV26.region=v;KV26.store='';KV26.load();};KV26.changeStore=function(v){KV26.store=v;KV26.fill();KV26.drawStock();};KV26.changeDate=function(v){KV26.date=v;KV26.fill();};
+ function cur(){const ds=KV26.data?.history||[];return ds.find(r=>r.active&&r.region===KV26.region&&r.store===KV26.store&&r.date===KV26.date)||null;}
+ KV26.fill=function(){const r=cur(),refs=KV26.data?.refs||[];refs.forEach((ref,i)=>{const inp=el('kv26-q'+i);if(inp)inp.value=r&&r.values?Number(r.values[ref]||0):0;});if(el('kv26-proof'))el('kv26-proof').value=r?.proof||'';if(el('kv26-motif'))el('kv26-motif').value=r?'Correction du relevé de caisse':'Ventes du magasin hors présence';if(el('kv26-current'))el('kv26-current').textContent=r?'Correction du jour : version '+r.version+' · '+nf(r.total)+' déjà déclarés':'Première déclaration pour ce magasin et cette date';if(el('kv26-confirm'))el('kv26-confirm').checked=false;KV26.pending=null;};
+ KV26.render=function(){const d=KV26.data,c=d.counts,refs=d.refs||[],allowed=d.canWrite&&KV26.region!=='TOUTES',shops=d.stores.filter(x=>x.region===KV26.region),current=cur();const currentTime=now();let html='<div class="kv26-fields"><div><label>Mois analysé</label><input type="month" id="kv26-month" value="'+esc(KV26.month)+'" onchange="KV26.changeMonth(this.value)"></div>'+(kv26Mode==='MASTER'?'<div><label>Région</label><select onchange="KV26.changeRegion(this.value)"><option value="GUADELOUPE" '+(KV26.region==='GUADELOUPE'?'selected':'')+'>Guadeloupe</option><option value="MARTINIQUE" '+(KV26.region==='MARTINIQUE'?'selected':'')+'>Martinique</option><option value="TOUTES" '+(KV26.region==='TOUTES'?'selected':'')+'>Toutes les régions (lecture)</option></select></div>':'')+'</div>';
+ html+='<div class="kv26-kpis" style="margin-top:15px"><div class="kv26-kpi"><span>Déjà enregistrées</span><b>'+nf(c.existant)+'</b></div><div class="kv26-kpi"><span>Hors présence</span><b>'+nf(c.horsPresence)+'</b></div><div class="kv26-kpi"><span>Total clients</span><b>'+nf(c.total)+'</b></div></div>';
+ html+='<div class="kv26-hint" style="margin-top:15px"><b>Règle anti-doublon :</b> saisir seulement les ventes clients qui ne figurent PAS dans les ventes déjà enregistrées. Le journal distingue les ventes en rayon et en animation. Aucun point, aucune prime et aucun CA KVG supplémentaire.</div>';
+ if(d.issues&&d.issues.length)html+='<p class="kv26-warn">Sources partiellement indisponibles : '+d.issues.map(x=>esc(x.store)).join(', ')+'</p>';
++html+='<section id="kv26-stock-preview" class="kv26-card" aria-live="polite" style="margin-top:18px"><strong>📦 Stock en machine enregistré</strong><p class="kv26-sub">Chargement des stocks…</p></section>';
+ if(allowed){html+='<h3 style="margin-top:23px">Soumettre ou corriger un relevé (validation KVG Master)</h3><div class="kv26-fields"><div><label>Magasin</label><select id="kv26-store" onchange="KV26.changeStore(this.value)">'+shops.map(s=>'<option '+(s.name===KV26.store?'selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></div><div><label>Date exacte des ventes</label><input id="kv26-date" type="date" max="'+esc(currentTime)+'" value="'+esc(KV26.date)+'" onchange="KV26.changeDate(this.value)"></div></div>';
+ html+='<p id="kv26-current" class="kv26-sub" style="margin-top:10px">'+(current?'Correction version '+current.version:'Nouvelle déclaration')+'</p><div class="kv26-ref-head" style="margin-top:16px">'+refs.map((ref,i)=>'<div class="kv26-ref"><label for="kv26-q'+i+'">'+esc(ref)+'</label><input id="kv26-q'+i+'" type="number" min="0" max="10000" step="1" value="'+(current?Number(current.values[ref]||0):0)+'"></div>').join('')+'</div>';
+ html+='<div class="kv26-fields" style="margin-top:15px"><div><label>Justificatif (rapport de caisse, inventaire…)</label><input id="kv26-proof" placeholder="Ex. Rapport caisse 08-11 magasin" maxlength="130" value="'+esc(current?.proof||'')+'"></div><div><label>Motif de saisie / correction</label><input id="kv26-motif" maxlength="190" value="'+(current?'Correction du relevé de caisse':'Ventes du magasin hors présence')+'"></div></div><div class="kv26-chk"><input id="kv26-confirm" type="checkbox"><label for="kv26-confirm">Je certifie que ces quantités proviennent des ventes magasin <b>non déjà saisies</b> dans les feuilles des vendeuses ou du magasin. J’ai vérifié le justificatif.</label></div><button id="kv26-save" onclick="KV26.save()">↗ Soumettre à KVG Master</button><div id="kv26-msg" class="kv26-message"></div>';}else html+='<p style="margin-top:17px" class="kv26-sub">Consultation seule : les corrections sont réservées à Vanessa, Élodie ou la direction selon l’application.</p>';
