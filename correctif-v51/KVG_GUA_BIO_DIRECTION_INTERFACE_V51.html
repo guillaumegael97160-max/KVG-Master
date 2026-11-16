@@ -1,0 +1,54 @@
+<style id="kvg51BioStyle">
+.kvg51-bio-root{max-width:1060px;margin:0 auto;padding:16px 8px}.kvg51-bio-card{border:1px solid #8f784d;background:#161b20;color:#f5ecd9;border-radius:18px;padding:22px;margin:15px 0}.kvg51-bio-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:13px}.kvg51-bio-person{background:#20262a;border:1px solid #746244;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px}.kvg51-bio-person strong{font-size:18px;color:#ffe1a5}.kvg51-bio-person small{color:#bab7b0}.kvg51-bio-action{padding:11px 17px;border:1px solid #d8b46f;border-radius:11px;background:#d7b16c;color:#151618;font-weight:800;min-height:45px;cursor:pointer}.kvg51-bio-action[disabled]{opacity:.5;cursor:default}.kvg51-bio-off{background:#312726;color:#ffdbd1;border-color:#ad7367}.kvg51-bio-state{font-weight:800;color:#f1cf8b}.kvg51-bio-error{color:#ffb2ac}
+</style>
+<script>
+/* KVG MASTER V51 — autorisation biométrique par vendeuse Guadeloupe. Ne modifie pas la RH existante. */
+var KVG51BIO={loaded:false,loading:false,rows:[],error:'',message:'',working:''};
+function kvg51BioEsc_(x){return String(x==null?'':x).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+function kvg51BioView_(){
+ var s=KVG51BIO;
+ var head='<section class="kvg51-bio-root"><div class="kvg51-bio-card"><span class="eyebrow">DIRECTION · GUADELOUPE</span><h1>Empreintes digitales des vendeuses</h1>'+
+ '<p>Autorise individuellement les vendeuses à activer l’empreinte sur leur téléphone personnel. Par défaut, personne n’est autorisé. Le code personnel reste disponible.</p>'+
+ '<p><strong>Important :</strong> ce bouton autorise la fonction, mais n’enregistre jamais une empreinte à la place de la vendeuse. La vendeuse doit ensuite ouvrir « Mon profil → Empreinte digitale » dans l’APK V49.</p>'+
+ '<button type="button" class="kvg51-bio-action" id="kvg51BioRefresh">↻ Actualiser les autorisations</button></div>';
+ if(state.preview)return head+'<div class="kvg51-bio-card">Mode aperçu : aucun changement de compte autorisé.</div></section>';
+ var body=s.loading?'<p class="kvg51-bio-card">Lecture du registre RH en cours…</p>':s.error?'<p class="kvg51-bio-card kvg51-bio-error">'+kvg51BioEsc_(s.error)+'</p>':'';
+ if(s.message)body+='<p class="kvg51-bio-card kvg51-bio-state">'+kvg51BioEsc_(s.message)+'</p>';
+ if(s.loaded){
+   if(!s.rows.length)body+='<p class="kvg51-bio-card">Aucune vendeuse Guadeloupe trouvée dans le registre RH.</p>';
+   else body+='<div class="kvg51-bio-grid">'+s.rows.map(function(p){
+    var eligible=p.status==='ACTIF'&&p.configured&&p.book;
+    var btnDisabled=s.working===p.id||(!p.autorisee&&!eligible);
+    return '<article class="kvg51-bio-person"><strong>'+kvg51BioEsc_(p.name||p.login)+'</strong><small>Compte : '+kvg51BioEsc_(p.login)+' · '+kvg51BioEsc_(p.id)+'</small>'+
+     '<div class="kvg51-bio-state">'+(p.autorisee?'☝ Autorisation active':'○ Empreinte non autorisée')+'</div>'+
+     '<small>'+(eligible?'Compte actif et code configuré':'Compte inactif, sans code, ou classeur non préparé')+'</small>'+
+     (p.updated?'<small>Dernière modification : '+kvg51BioEsc_(p.updated)+'</small>':'')+
+     '<button type="button" class="kvg51-bio-action '+(p.autorisee?'kvg51-bio-off':'')+'" data-kvg51-profile="'+kvg51BioEsc_(p.id)+'" data-kvg51-enable="'+(!p.autorisee)+'" '+(btnDisabled?'disabled':'')+'>'+(p.autorisee?'Retirer l’autorisation':'Autoriser l’empreinte')+'</button></article>';
+   }).join('')+'</div>';
+ }
+ return head+body+'</section>';
+}
+function kvg51BioLoad_(force){
+ if(KVG51BIO.loading||(!force&&KVG51BIO.loaded))return;
+ if(!window.google||!google.script||!google.script.run){KVG51BIO.error='Le site doit être ouvert depuis le déploiement Apps Script pour consulter les autorisations.';return;}
+ KVG51BIO.loading=true;KVG51BIO.error='';
+ google.script.run.withSuccessHandler(function(r){KVG51BIO.loading=false;KVG51BIO.loaded=true;KVG51BIO.rows=Array.isArray(r&&r.vendeuses)?r.vendeuses:[];if(state.tab==='biogua')render();})
+ .withFailureHandler(function(e){KVG51BIO.loading=false;KVG51BIO.error=String(e&&e.message||e);if(state.tab==='biogua')render();})
+ .kvgGuaBioDirV51Lister(kvgV19SessionToken_());
+}
+function kvg51BioSet_(id,enabled){
+ if(!window.google||!google.script||!google.script.run)return;
+ var p=KVG51BIO.rows.filter(function(x){return x.id===id;})[0];if(!p||KVG51BIO.working)return;
+ var msg=enabled?'Autoriser l’empreinte pour '+p.name+' ?':'Retirer l’autorisation de '+p.name+' ? Ses anciennes associations biométriques seront invalidées.';
+ if(!window.confirm(msg))return;
+ KVG51BIO.working=id;KVG51BIO.message='Enregistrement de la décision…';if(state.tab==='biogua')render();
+ google.script.run.withSuccessHandler(function(){KVG51BIO.working='';KVG51BIO.message=enabled?'Autorisation donnée à '+p.name+'. Elle peut maintenant configurer son téléphone.':'Autorisation retirée à '+p.name+'. Anciennes associations révoquées.';KVG51BIO.loaded=false;kvg51BioLoad_(true);})
+ .withFailureHandler(function(e){KVG51BIO.working='';KVG51BIO.error=String(e&&e.message||e);if(state.tab==='biogua')render();})
+ .kvgGuaBioDirV51Autoriser(kvgV19SessionToken_(),id,enabled);
+}
+function kvg51BioBind_(){
+ var refresh=document.getElementById('kvg51BioRefresh');if(refresh)refresh.onclick=function(){KVG51BIO.message='';KVG51BIO.loaded=false;kvg51BioLoad_(true);};
+ document.querySelectorAll('[data-kvg51-profile]').forEach(function(b){b.onclick=function(){kvg51BioSet_(b.dataset.kvg51Profile,b.dataset.kvg51Enable==='true');};});
+ if(!KVG51BIO.loaded&&!KVG51BIO.loading&&!KVG51BIO.error)Promise.resolve().then(function(){kvg51BioLoad_(false);});
+}
+</script>
