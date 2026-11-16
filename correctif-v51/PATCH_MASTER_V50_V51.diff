@@ -1,0 +1,91 @@
+--- KVG_SITE_V50.html
++++ KVG_SITE_V51_ADMIN_BIOMETRIE.html
+@@ -515,8 +515,8 @@
+ {name:'Famille',kind:'Mon Déo by Déo An Nou',note:'Sans huile essentielle · Dès 7 ans',score:'100/100',accent:'#d0ab58',img:'mon_2',desc:'Bicarbonate et huile de coco, formule du catalogue.',price:'Conditions commerciales sur demande'},
+ {name:'Femme',kind:'Mon Déo by Déo An Nou',note:'Tea tree, menthe des champs · Dès 11 ans',score:'94/100',accent:'#b86494',img:'mon_3',desc:'Formule ciblée femme, riche en composants naturels selon catalogue.',price:'Conditions commerciales sur demande'},
+ {name:'Homme',kind:'Mon Déo by Déo An Nou',note:'Tea tree, menthe poivrée · Dès 11 ans',score:'90/100',accent:'#6c7c8d',img:'mon_4',desc:'Formule ciblée homme, fraîcheur intense.',price:'Conditions commerciales sur demande'}]};
+-const NAV=[['home','◈','Vue générale','Pilotage'],['forecast','▥','Prévisionnel & Simulation','Pilotage'],['catalog','◉','Les deux gammes','Marques'],['stores','▤','Magasins & CA','Réseau'],['team','♙','Équipes & absences','Ressources'],['rh','♙','Gestion des profils','Ressources'],['sellerapps','↗','Applications vendeuses','Ressources'],['audit','⌕','Audit des ventes','Ressources'],['stocks','▤','Stock global & potentiel','Laboratoire'],['materials','♧','Matières premières','Laboratoire'],['sim','⟡','Simulateur de fabrication','Laboratoire'],['prod','▣','Production & lots','Opérations'],['reorder','↗','Réassort hypermarchés','Opérations'],['suivi','▤','Suivi magasins','Opérations'],['trace','⌁','Traçabilité & contrôles','Opérations'],['anomalies','⚠','Anomalies','Opérations'],['pharma','✚','Pharmacies & distribution','Réseau'],['buyer','✦','Présentation investisseurs','Présentation'],['files','☷','Tous les classeurs','Accès']];
+-const TITLES={forecast:['Prévisionnel & simulation commerciale','Scénarios par boutique et par vendeuse · 1 jour à 12 mois.'],suivi:['Suivi des magasins','Stocks, ventes hors présence et demandes V28.1.'],rh:['Gestion centrale des vendeurs','Guadeloupe, Martinique, photos, droits d’accès et primes.'],home:['Vue générale','Laboratoire, marques et performance du réseau.'],catalog:['La collection KVG','Deux marques complémentaires, 12 produits présentés.'],stores:['Réseau de distribution','Ventes et potentiel commercial par point de vente.'],team:['Équipes · classement & planning','Ventes, pointages, heures, statistiques et réassorts par profil.'],sellerapps:['Applications vendeuses · supervision','Contrôler les applications Guadeloupe/Martinique, leur synchronisation et les sources de saisie.'],audit:['Audit des ventes et ajustements','Comparaison vendeuses, journal central et magasins. Contrôles et alertes.'],stocks:['Stock global & potentiel','Mon Déo, Déo An Nou, flacons, matières, ajustements et alertes email.'],materials:['Matières premières','Stock disponible, seuils, achats et bidons.'],sim:['Simulateur de fabrication','Évaluez les besoins réels d’une commande de production.'],prod:['Fabrication & traçabilité','Production multi-références reliée au laboratoire.'],reorder:['Réassorts hypermarchés','Lots obligatoires, destinataires et sorties laboratoire.'],trace:['Journal de traçabilité KVG','Historique détaillé de tous les mouvements et de leurs sources.'],anomalies:['Anomalies et corrections aux sources','Rechercher, vérifier et corriger les doublons de pointage Martinique avec journal avant/après.'],pharma:['Distribution en pharmacie','Réseau, ventes validées et présentation de la marque.'],buyer:['Présentation acheteurs','Une lecture professionnelle du potentiel de KVG.'],files:['Bibliothèque des classeurs','Tous les originaux et dossiers opérationnels.']};
++const NAV=[['home','◈','Vue générale','Pilotage'],['forecast','▥','Prévisionnel & Simulation','Pilotage'],['catalog','◉','Les deux gammes','Marques'],['stores','▤','Magasins & CA','Réseau'],['team','♙','Équipes & absences','Ressources'],['rh','♙','Gestion des profils','Ressources'],['biogua','☝','Empreintes vendeuses','Ressources'],['sellerapps','↗','Applications vendeuses','Ressources'],['audit','⌕','Audit des ventes','Ressources'],['stocks','▤','Stock global & potentiel','Laboratoire'],['materials','♧','Matières premières','Laboratoire'],['sim','⟡','Simulateur de fabrication','Laboratoire'],['prod','▣','Production & lots','Opérations'],['reorder','↗','Réassort hypermarchés','Opérations'],['suivi','▤','Suivi magasins','Opérations'],['trace','⌁','Traçabilité & contrôles','Opérations'],['anomalies','⚠','Anomalies','Opérations'],['pharma','✚','Pharmacies & distribution','Réseau'],['buyer','✦','Présentation investisseurs','Présentation'],['files','☷','Tous les classeurs','Accès']];
++const TITLES={forecast:['Prévisionnel & simulation commerciale','Scénarios par boutique et par vendeuse · 1 jour à 12 mois.'],suivi:['Suivi des magasins','Stocks, ventes hors présence et demandes V28.1.'],rh:['Gestion centrale des vendeurs','Guadeloupe, Martinique, photos, droits d’accès et primes.'],biogua:['Empreintes vendeuses Guadeloupe','Activer ou retirer la connexion par empreinte pour chaque vendeuse.'],home:['Vue générale','Laboratoire, marques et performance du réseau.'],catalog:['La collection KVG','Deux marques complémentaires, 12 produits présentés.'],stores:['Réseau de distribution','Ventes et potentiel commercial par point de vente.'],team:['Équipes · classement & planning','Ventes, pointages, heures, statistiques et réassorts par profil.'],sellerapps:['Applications vendeuses · supervision','Contrôler les applications Guadeloupe/Martinique, leur synchronisation et les sources de saisie.'],audit:['Audit des ventes et ajustements','Comparaison vendeuses, journal central et magasins. Contrôles et alertes.'],stocks:['Stock global & potentiel','Mon Déo, Déo An Nou, flacons, matières, ajustements et alertes email.'],materials:['Matières premières','Stock disponible, seuils, achats et bidons.'],sim:['Simulateur de fabrication','Évaluez les besoins réels d’une commande de production.'],prod:['Fabrication & traçabilité','Production multi-références reliée au laboratoire.'],reorder:['Réassorts hypermarchés','Lots obligatoires, destinataires et sorties laboratoire.'],trace:['Journal de traçabilité KVG','Historique détaillé de tous les mouvements et de leurs sources.'],anomalies:['Anomalies et corrections aux sources','Rechercher, vérifier et corriger les doublons de pointage Martinique avec journal avant/après.'],pharma:['Distribution en pharmacie','Réseau, ventes validées et présentation de la marque.'],buyer:['Présentation acheteurs','Une lecture professionnelle du potentiel de KVG.'],files:['Bibliothèque des classeurs','Tous les originaux et dossiers opérationnels.']};
+ const FIXED_MON=['Homme','Femme','Enfant','Famille'];
+ const PERIODS=[['EXERCICE-2026-2027','Exercice complet · sept. 2026 – août 2027'],['ANNEE-2026','Année civile 2026 · sept. – déc.'],['ANNEE-2027','Année civile 2027 · janv. – août']];
+ const MONTHS=[['2026-09','Sept. 2026'],['2026-10','Oct. 2026'],['2026-11','Nov. 2026'],['2026-12','Déc. 2026'],['2027-01','Janv. 2027'],['2027-02','Févr. 2027'],['2027-03','Mars 2027'],['2027-04','Avr. 2027'],['2027-05','Mai 2027'],['2027-06','Juin 2027'],['2027-07','Juil. 2027'],['2027-08','Août 2027']];
+@@ -1159,6 +1159,7 @@
+       case 'team':html=viewTeam(d||{});break;
+       case 'sellerapps':html=kvgV11SellerAppsView();break;
+       case 'rh':html=kvgRhUiView_();break;
++      case 'biogua':html=kvg51BioView_();break;
+        case 'audit':html=kvgAudit21View_();break;
+       case 'stocks':html=kvgV24StockView_();break;
+       case 'materials':html=viewMaterials();break;
+@@ -1174,7 +1175,7 @@
+     }
+   }
+  }catch(err){console.error(err);html=note('Erreur d’affichage : '+safe(err.message),true);}
+- $('content').innerHTML=html;attachDynamic();
++ $('content').innerHTML=html;attachDynamic();if(state.tab==='biogua')kvg51BioBind_();
+ }
+ function viewHome(d){let s=d.sales||{},p=d.pharma||{},e=state.extra||{},caKvg=kvgCAHT_(d);return `${brandTiles()}<div class="brand-hero"><div class="hero-copy"><span class="eyebrow">FABRIQUÉ EN GUADELOUPE · DEUX MARQUES</span><h2>Le laboratoire au cœur<br><em>de chaque résultat.</em></h2><p>Une direction unique pour les magasins, la production, la traçabilité, les matières premières et les équipes. Déo An Nou en pharmacie et Mon Déo en grande distribution.</p><button class="btn gold" data-go="buyer">Découvrir le potentiel de la marque ↗</button><div class="tags"><span class="tag">9 magasins suivis</span><span class="tag">12 produits présentés</span><span class="tag">2 territoires</span></div></div><div class="hero-images"><img src="${img('mon_1')}" alt="Mon Déo Enfant"><img src="${img('deo_7')}" alt="Gran Non’m La"><img src="${img('mon_3')}" alt="Mon Déo Femme"></div></div>
+  <div class="kpis">${kpi('KVG · CA HT IMPLANTÉ ESTIMÉ',currency(caKvg.totalHT),'Flacons livrés Mon Déo + HT pharmacies validées / projetées',true)}${kpi('MON DÉO · IMPLANTATIONS HT',currency(caKvg.monHT),fmt(caKvg.monUnits)+' déos × 6,38 € HT',true)}${kpi('DÉO AN NOU · HT PHARMACIES',currency(caKvg.pharmaHT),caKvg.pharmaEstime?'Simulation à 7 € HT/unité, non facturée':'Ventes pharmacie HT validées')}${kpi('VENTES MON DÉO · PÉRIODE',fmt(caKvg.monSoldUnits),periodLabel(state.month)+' · 2 territoires')}${kpi('RÉASSORTS MAGASINS',fmt(s.restock||0),'Flacons implantés / livrés aux magasins')}${kpi('CA PUBLIC MAGASINS TTC',currency(caKvg.publicTTC),'Vente au détail · réf. 9,95 € TTC · HORS KVG')}${kpi('GUADELOUPE',fmt(s.gpe||0),'Unités HYPER vendues')}${kpi('MON DÉO MARTINIQUE',fmt(s.mq||0),'Magasins · ventes caisse suivies')}${kpi('DÉO AN NOU · VENTES MARTINIQUE','<span id="kv30-home-an">—</span>','MQ4 validées · ventes clients, hors CA labo')}${kpi('POINTS BRUTS · MARTINIQUE','<span id="kv30-home-points">—</span>','Déo An Nou · prime non validée')}${kpi('PHARMACIE VALIDÉE',d.incomplete?'—':fmt(p.qty||0),d.incomplete?'Source partielle : ouvrir Pharmacies':'Quantités enregistrées au statut validé')}${kpi('HEURES À JUSTIFIER',state.teamLoaded?fmt((e.profiles||[]).reduce((a,x)=>a+Number(x.totals?.missing||0),0),1):'—',state.teamLoaded?'Écarts de présence, à confirmer':'Ouvrir Équipes pour charger les heures')}</div>
+@@ -3731,5 +3732,60 @@
+ else if(state.tab==='prod'||state.tab==='materials')kvgV50Bind_();
+ </script>
+ 
++<style id="kvg51BioStyle">
++.kvg51-bio-root{max-width:1060px;margin:0 auto;padding:16px 8px}.kvg51-bio-card{border:1px solid #8f784d;background:#161b20;color:#f5ecd9;border-radius:18px;padding:22px;margin:15px 0}.kvg51-bio-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:13px}.kvg51-bio-person{background:#20262a;border:1px solid #746244;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px}.kvg51-bio-person strong{font-size:18px;color:#ffe1a5}.kvg51-bio-person small{color:#bab7b0}.kvg51-bio-action{padding:11px 17px;border:1px solid #d8b46f;border-radius:11px;background:#d7b16c;color:#151618;font-weight:800;min-height:45px;cursor:pointer}.kvg51-bio-action[disabled]{opacity:.5;cursor:default}.kvg51-bio-off{background:#312726;color:#ffdbd1;border-color:#ad7367}.kvg51-bio-state{font-weight:800;color:#f1cf8b}.kvg51-bio-error{color:#ffb2ac}
++</style>
++<script>
++/* KVG MASTER V51 — autorisation biométrique par vendeuse Guadeloupe. Ne modifie pas la RH existante. */
++var KVG51BIO={loaded:false,loading:false,rows:[],error:'',message:'',working:''};
++function kvg51BioEsc_(x){return String(x==null?'':x).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
++function kvg51BioView_(){
++ var s=KVG51BIO;
++ var head='<section class="kvg51-bio-root"><div class="kvg51-bio-card"><span class="eyebrow">DIRECTION · GUADELOUPE</span><h1>Empreintes digitales des vendeuses</h1>'+
++ '<p>Autorise individuellement les vendeuses à activer l’empreinte sur leur téléphone personnel. Par défaut, personne n’est autorisé. Le code personnel reste disponible.</p>'+
++ '<p><strong>Important :</strong> ce bouton autorise la fonction, mais n’enregistre jamais une empreinte à la place de la vendeuse. La vendeuse doit ensuite ouvrir « Mon profil → Empreinte digitale » dans l’APK V49.</p>'+
++ '<button type="button" class="kvg51-bio-action" id="kvg51BioRefresh">↻ Actualiser les autorisations</button></div>';
++ if(state.preview)return head+'<div class="kvg51-bio-card">Mode aperçu : aucun changement de compte autorisé.</div></section>';
++ var body=s.loading?'<p class="kvg51-bio-card">Lecture du registre RH en cours…</p>':s.error?'<p class="kvg51-bio-card kvg51-bio-error">'+kvg51BioEsc_(s.error)+'</p>':'';
++ if(s.message)body+='<p class="kvg51-bio-card kvg51-bio-state">'+kvg51BioEsc_(s.message)+'</p>';
++ if(s.loaded){
++   if(!s.rows.length)body+='<p class="kvg51-bio-card">Aucune vendeuse Guadeloupe trouvée dans le registre RH.</p>';
++   else body+='<div class="kvg51-bio-grid">'+s.rows.map(function(p){
++    var eligible=p.status==='ACTIF'&&p.configured&&p.book;
++    var btnDisabled=s.working===p.id||(!p.autorisee&&!eligible);
++    return '<article class="kvg51-bio-person"><strong>'+kvg51BioEsc_(p.name||p.login)+'</strong><small>Compte : '+kvg51BioEsc_(p.login)+' · '+kvg51BioEsc_(p.id)+'</small>'+
++     '<div class="kvg51-bio-state">'+(p.autorisee?'☝ Autorisation active':'○ Empreinte non autorisée')+'</div>'+
++     '<small>'+(eligible?'Compte actif et code configuré':'Compte inactif, sans code, ou classeur non préparé')+'</small>'+
++     (p.updated?'<small>Dernière modification : '+kvg51BioEsc_(p.updated)+'</small>':'')+
++     '<button type="button" class="kvg51-bio-action '+(p.autorisee?'kvg51-bio-off':'')+'" data-kvg51-profile="'+kvg51BioEsc_(p.id)+'" data-kvg51-enable="'+(!p.autorisee)+'" '+(btnDisabled?'disabled':'')+'>'+(p.autorisee?'Retirer l’autorisation':'Autoriser l’empreinte')+'</button></article>';
++   }).join('')+'</div>';
++ }
++ return head+body+'</section>';
++}
++function kvg51BioLoad_(force){
++ if(KVG51BIO.loading||(!force&&KVG51BIO.loaded))return;
++ if(!window.google||!google.script||!google.script.run){KVG51BIO.error='Le site doit être ouvert depuis le déploiement Apps Script pour consulter les autorisations.';return;}
++ KVG51BIO.loading=true;KVG51BIO.error='';
++ google.script.run.withSuccessHandler(function(r){KVG51BIO.loading=false;KVG51BIO.loaded=true;KVG51BIO.rows=Array.isArray(r&&r.vendeuses)?r.vendeuses:[];if(state.tab==='biogua')render();})
++ .withFailureHandler(function(e){KVG51BIO.loading=false;KVG51BIO.error=String(e&&e.message||e);if(state.tab==='biogua')render();})
++ .kvgGuaBioDirV51Lister(kvgV19SessionToken_());
++}
++function kvg51BioSet_(id,enabled){
++ if(!window.google||!google.script||!google.script.run)return;
++ var p=KVG51BIO.rows.filter(function(x){return x.id===id;})[0];if(!p||KVG51BIO.working)return;
++ var msg=enabled?'Autoriser l’empreinte pour '+p.name+' ?':'Retirer l’autorisation de '+p.name+' ? Ses anciennes associations biométriques seront invalidées.';
++ if(!window.confirm(msg))return;
++ KVG51BIO.working=id;KVG51BIO.message='Enregistrement de la décision…';if(state.tab==='biogua')render();
++ google.script.run.withSuccessHandler(function(){KVG51BIO.working='';KVG51BIO.message=enabled?'Autorisation donnée à '+p.name+'. Elle peut maintenant configurer son téléphone.':'Autorisation retirée à '+p.name+'. Anciennes associations révoquées.';KVG51BIO.loaded=false;kvg51BioLoad_(true);})
++ .withFailureHandler(function(e){KVG51BIO.working='';KVG51BIO.error=String(e&&e.message||e);if(state.tab==='biogua')render();})
++ .kvgGuaBioDirV51Autoriser(kvgV19SessionToken_(),id,enabled);
++}
++function kvg51BioBind_(){
++ var refresh=document.getElementById('kvg51BioRefresh');if(refresh)refresh.onclick=function(){KVG51BIO.message='';KVG51BIO.loaded=false;kvg51BioLoad_(true);};
++ document.querySelectorAll('[data-kvg51-profile]').forEach(function(b){b.onclick=function(){kvg51BioSet_(b.dataset.kvg51Profile,b.dataset.kvg51Enable==='true');};});
++ if(!KVG51BIO.loaded&&!KVG51BIO.loading&&!KVG51BIO.error)Promise.resolve().then(function(){kvg51BioLoad_(false);});
++}
++</script>
++
+ </body>
+ </html>
