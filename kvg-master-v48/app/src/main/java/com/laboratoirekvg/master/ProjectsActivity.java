@@ -36,7 +36,8 @@ public final class ProjectsActivity extends Activity {
         new Project("sante-plus", "Pharmacie Santé Plus", 2, ""),
         new Project("instagram", "Concours Instagram Déo An Nou", 3,
             "https://script.google.com/macros/s/AKfycbzBCJsekdU3PmkPqcDK9pPRSXDTzaPS7t9kfNrcVZtbcpik1FbcG96LSKbGcTCq1H14/exec"),
-        new Project("carrefour", "Concours Carrefour", 3, ""),
+        new Project("carrefour", "Concours Carrefour", 3,
+            "https://script.google.com/macros/s/AKfycbytvh4GC8e_K_r1AztZSS9ov74QxQAy7CyKdXdm5Nk2Ep6BAN9SAVlWUw8L1bc-pAc0/exec"),
         new Project("malory", "KVG Malory", 4, "")
     };
     private LinearLayout content;

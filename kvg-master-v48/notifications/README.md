@@ -4,8 +4,8 @@ L’accueil utilise le site Master et sa connexion habituelle. Les onglets
 Ventes, Pharmacies, Concours et Équipe répertorient neuf projets.
 Les liens ouvrent le navigateur Android pour utiliser les sessions Web et les
 connexions Google existantes. Un appui long modifie l’adresse de chaque projet
-sur le téléphone. Les URL de Commandes Pharmacies et du concours Instagram
-sont préremplies. Pour les sept autres projets, utiliser leurs URL de production.
+sur le téléphone. Les URL de Commandes Pharmacies et des concours Instagram et Carrefour
+sont préremplies. Pour les six autres projets, utiliser leurs URL de production.
 
 ## Configuration des notifications
 
