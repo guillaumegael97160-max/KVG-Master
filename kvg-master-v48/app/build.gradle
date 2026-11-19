@@ -1,4 +1,14 @@
-plugins { id 'com.android.application' }
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services' version '4.4.2' apply false
+}
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+}
+
+dependencies {
+    implementation 'com.google.firebase:firebase-messaging:24.1.2'
+}
 
 def signingPath = System.getenv('KVG_MASTER_KEYSTORE')
 def signingStorePass = System.getenv('KVG_MASTER_STORE_PASSWORD')
@@ -9,7 +19,7 @@ def hasSigning = signingPath && signingStorePass && signingAlias && signingKeyPa
 android {
     namespace 'com.laboratoirekvg.master'
     compileSdk 35
-    defaultConfig { applicationId 'com.laboratoirekvg.master'; minSdk 28; targetSdk 34; versionCode 52; versionName '4.8.1-historique-captures' }
+    defaultConfig { applicationId 'com.laboratoirekvg.master'; minSdk 28; targetSdk 34; versionCode 55; versionName '4.8.2-projets' }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     if (hasSigning) {
         signingConfigs {

@@ -108,7 +108,7 @@ public final class MainActivity extends Activity {
     private void createUI(){
         root = new FrameLayout(this);root.setBackgroundColor(BLACK);setContentView(root);
         browser = new WebView(this);browser.setBackgroundColor(BLACK);
-        FrameLayout.LayoutParams web = new FrameLayout.LayoutParams(-1,-1);web.topMargin=dp(44);root.addView(browser,web);
+        FrameLayout.LayoutParams web = new FrameLayout.LayoutParams(-1,-1);web.topMargin=dp(44);web.bottomMargin=dp(52);root.addView(browser,web);
         LinearLayout bar=new LinearLayout(this);bar.setGravity(Gravity.CENTER_VERTICAL);bar.setBackgroundColor(0xff11100e);
         TextView title=text("LABORATOIRE KVG · GESTION",12);title.setTypeface(null,Typeface.BOLD);
         bar.addView(title,new LinearLayout.LayoutParams(0,dp(43),1));
@@ -117,6 +117,23 @@ public final class MainActivity extends Activity {
         TextView refresh=text("⟳",26);refresh.setContentDescription("Actualiser KVG Master");bar.addView(refresh,new LinearLayout.LayoutParams(dp(48),dp(43)));
         refresh.setOnClickListener(v->{if(browser!=null)browser.reload();});
         root.addView(bar,new FrameLayout.LayoutParams(-1,dp(43),Gravity.TOP));
+        LinearLayout navigation = new LinearLayout(this);
+        navigation.setBackgroundColor(0xff11100e);
+        String[] tabs = {"Accueil", "Ventes", "Pharmacies", "Concours", "Équipe"};
+        for (int index = 0; index < tabs.length; index++) {
+            final int group = index;
+            TextView tab = text(tabs[index], 12);
+            navigation.addView(tab, new LinearLayout.LayoutParams(0, dp(52), 1));
+            tab.setOnClickListener(v -> {
+                if (group == 0) launchSite();
+                else startActivity(new Intent(this, ProjectsActivity.class).putExtra("group", group));
+            });
+        }
+        root.addView(navigation, new FrameLayout.LayoutParams(-1, dp(52), Gravity.BOTTOM));
+        TextView alerts = text("♢", 24);
+        alerts.setContentDescription("Notifications");
+        bar.addView(alerts, 1, new LinearLayout.LayoutParams(dp(44), dp(43)));
+        alerts.setOnClickListener(v -> startActivity(new Intent(this, ProjectsActivity.class)));
         progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
         progress.setIndeterminate(true);if(Build.VERSION.SDK_INT>=21)progress.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(GOLD));
         FrameLayout.LayoutParams pp=new FrameLayout.LayoutParams(-1,dp(2),Gravity.TOP);pp.topMargin=dp(42);root.addView(progress,pp);
