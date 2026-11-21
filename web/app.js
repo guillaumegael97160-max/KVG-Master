@@ -14,7 +14,24 @@ const activePresence=p=>p&&['Présence déclarée','Présence confirmée'].inclu
 const slotName=s=>s==='MATIN'?'08h30 – 12h30':s==='SIEGE'?'15h00 – 17h00':s==='SOIR'?'17h00 – 19h00':String(s);
 const getWeekDay=d=>S.week.find(x=>x.date===d);
 const t=(text,kind='')=>{const n=$('toast');n.textContent=text;n.style.background=kind==='error'?'#a23e4d':'#0c4850';n.classList.remove('hidden');clearTimeout(t.timer);t.timer=setTimeout(()=>n.classList.add('hidden'),3800)};
-function loading(v){S.busy=v;$('loading').classList.toggle('hidden',!v)}
+let attenteChargement;
+function loading(enCours){
+ S.busy=enCours;
+ const indicateur=$('loading');
+ if(!enCours){
+   clearTimeout(attenteChargement);
+   attenteChargement=undefined;
+   indicateur.classList.add('hidden');
+   indicateur.textContent='';
+   return;
+ }
+ if(attenteChargement===undefined&&indicateur.classList.contains('hidden')){
+   attenteChargement=setTimeout(()=>{
+     attenteChargement=undefined;
+     if(S.busy){indicateur.classList.remove('hidden');indicateur.textContent='Traitement en cours…'}
+   },650);
+ }
+}
 const BACKEND='https://script.google.com/macros/s/AKfycbyezwCIzg2WYtyrKUfM6LfQnveCGH2mlLou-q1-8tWAEwxG41AcQ0YwpTbrkIkmH6ZN/exec';
 const inApp=location.origin==='https://appassets.androidplatform.net';
 if(inApp)document.documentElement.classList.add('app-native');
