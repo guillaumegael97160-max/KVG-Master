@@ -25,7 +25,7 @@ export default {
     const url = new URL(fichier, origine);
     const version = chemin.searchParams.get('v');
     if (version && /^[0-9]{1,8}$/.test(version)) url.searchParams.set('v', version);
-    const reponse = await fetch(url, { method: request.method, redirect: 'error' });
+    const reponse = await fetch(url.toString(), { method: request.method, redirect: 'manual' });
     if (!reponse.ok) return new Response(null, { status: reponse.status });
     const entetes = new Headers(reponse.headers);
     entetes.set('X-Content-Type-Options', 'nosniff');
