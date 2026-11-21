@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d2933">
 <title>KVG · Malory · Alternance</title>
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <div id="loading" class="loading hidden"></div>
 <section id="auth" class="login"><div class="cover-pane"><div class="cover-brand">LABORATOIRE KVG</div><h1 class="cover-title">Le parcours<br><em>de Malory.</em></h1><p class="cover-sub">Bachelor Communication, Digital &amp; Événementiel</p></div><div class="login-card">
  <h2>Mon espace KVG</h2><p class="muted">Choisis ton profil pour te connecter.</p>
- <form id="loginForm"><div class="form-field"><label for="role">Espace</label><select id="role" name="role"><option value="MALORY">Malory · Alternante</option><option value="VANESSA">Vanessa · Formation</option><option value="GUILLAUME">Guillaume · Gestion des accès</option></select></div>
+ <form id="loginForm"><div class="form-field"><label for="role">Espace</label><select id="role" name="role"><option value="MALORY">Malory · Alternante</option><option value="VANESSA">Vanessa · Formation</option><option value="GUILLAUME">Gaël Guillaume · Évaluation et accès</option></select></div>
  <div class="form-field"><label for="pin">Mot de passe</label><input id="pin" name="pin" type="password" autocomplete="current-password" minlength="6" required></div>
  <button type="submit" class="btn full" style="margin-top:13px">Se connecter</button></form>
  <div class="msg hidden" id="loginMsg" role="status"></div>
@@ -21,7 +21,7 @@
 <section id="accessPanel" class="login hidden" aria-labelledby="accessTitle">
  <div class="login-card access-card">
   <div class="brand"><div class="logo">KVG</div><div><strong>LABORATOIRE KVG</strong><div class="small muted">Administration Guillaume</div></div></div>
-  <h1 id="accessTitle">Gestion des accès</h1>
+  <h1 id="accessTitle">Espace Gaël Guillaume</h1><section class="dk-gael"><h2>Compétences de Malory</h2><button type="button" class="btn secondary" id="notesGael">Évaluer sur 100</button></section><h2>Gestion des accès</h2>
   <p class="muted">Choisis un compte pour définir son mot de passe.</p>
   <form id="accessForm">
    <div class="form-field"><label for="accessTarget">Compte à modifier</label><select id="accessTarget" required><option value="">Choisir un compte</option><option value="MALORY">Malory</option><option value="VANESSA">Vanessa</option><option value="GUILLAUME">Guillaume (mon compte)</option></select></div>
@@ -38,6 +38,6 @@
 
 <div id="app" class="app hidden"><header class="top"><div class="brand"><div class="logo">KVG</div><div><strong>MALORY · KVG</strong><small>Communication · Digital · Événementiel</small></div></div><div class="top-actions"><span class="small top-name" id="profileName"></span><button hidden data-bio class="btn sm" id="bioHeader" type="button">Activer l’empreinte</button><button class="btn sm" id="reload" type="button" title="Actualiser">↻</button><button class="btn sm" id="signout" type="button">Quitter</button></div></header><div class="layout"><nav id="nav" class="side" aria-label="Navigation"></nav><main id="content" class="content" tabindex="-1"></main></div></div>
 <div id="modalRoot"></div><div id="toast" class="toast hidden" role="status"></div>
-<script src="app.js?v=2" defer></script>
+<script src="app.js?v=3" defer></script>
 </body>
 </html>
