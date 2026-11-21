@@ -6,10 +6,10 @@
 <meta name="theme-color" content="#0d2933">
 <title>KVG Malory</title>
 <meta name="application-name" content="KVG Malory">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
-<div id="loading" class="loading hidden"></div>
+<div id="loading" class="loading hidden" role="status" aria-live="polite"></div>
 <section id="auth" class="login"><div class="cover-pane"><div class="cover-brand">LABORATOIRE KVG</div><h1 class="cover-title">KVG <em>Malory</em></h1><p class="cover-sub">Bachelor Communication, Digital &amp; Événementiel</p></div><div class="login-card">
  <h2>Mon espace KVG Malory</h2><p class="muted">Choisis ton profil pour te connecter.</p>
  <form id="loginForm"><div class="form-field"><label for="role">Espace</label><select id="role" name="role"><option value="MALORY">Malory · Alternante</option><option value="VANESSA">Vanessa · Formation</option><option value="GUILLAUME">Administration · Évaluation et accès</option></select></div>
@@ -39,6 +39,6 @@
 
 <div id="app" class="app hidden"><header class="top"><div class="brand"><div class="logo">KVG</div><div><strong>KVG MALORY</strong><small>Communication · Digital · Événementiel</small></div></div><div class="top-actions"><span class="small top-name" id="profileName"></span><button hidden data-bio class="btn sm" id="bioHeader" type="button">Activer l’empreinte</button><button class="btn sm" id="reload" type="button" title="Actualiser">↻</button><button class="btn sm" id="signout" type="button">Quitter</button></div></header><div class="layout"><nav id="nav" class="side" aria-label="Navigation"></nav><main id="content" class="content" tabindex="-1"></main></div></div>
 <div id="modalRoot"></div><div id="toast" class="toast hidden" role="status"></div>
-<script src="app.js?v=4" defer></script>
+<script src="app.js?v=5" defer></script>
 </body>
 </html>
